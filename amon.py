@@ -32,11 +32,6 @@ def get_cups_from_device(device_id):
         CUPS_CACHE[serial] = res
         CUPS_UUIDS[res] = cid.polissa.cups.id
         return res
-
-def get_device_uuid(device_id):
-    if device_id DEVICE_UUIDS:
-        return DEVICE_UUIDS[device_id]
-    else:
         
 
 def make_utc_timestamp(timestamp):
