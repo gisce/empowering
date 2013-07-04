@@ -25,6 +25,20 @@ def get_cups_from_device(device_id):
 def make_utc_timestamp(timestamp):
     return times.to_universal(timestamp, 'Europe/Madrid').isoformat('T') + 'Z'
 
+def false_to_none(struct, context=None):
+    if not context:
+        context = {}
+    if 'xmlrpc' in context:
+        return struct
+    converted = struct.copy()
+    for key, value in struct.items():
+        if isinstance(value, dict):
+            converted[key] = false_to_none(value)
+        else:
+            if isinstance(value, bool) and not value:
+                converted[key] = None
+    return converted
+
 def profile_to_amon(profiles):
     """Return a list of AMON readinds.
 
@@ -89,6 +103,72 @@ def profile_to_amon(profiles):
                 }
         ]
         })
+    return res
+
+def partner_data(partner_ids, context=None):
+    """Convert a partner to JSON Format.
+
+    {
+      "id": "sample string 1",
+      "fiscalId": "sample string 2",
+      "firstName": "sample string 3",
+      "firstSurname": "sample string 4",
+      "secondSurname": "sample string 5",
+      "email": "sample string 6",
+      "address": {
+        "street": "sample string 1",
+        "postalCode": "sample string 2",
+        "city": "sample string 3",
+        "cityCode": "sample string 4",
+        "province": "sample string 5",
+        "provinceCode": "sample string 6",
+        "country": "sample string 7",
+        "countryCode": "sample string 8",
+        "parcelNumber": "sample string 9"
+      }
+    }
+    """
+    if not hasattr(partners_ids, '__iter__'):
+        partners_ids = [partners_ids]
+    addr_obj = O.ResPartnerAddress
+    if not context:
+        context = {}
+    res = []
+    for partner_id in partner_ids:
+        partner = O.ResPartner.get(partner_id)
+        vat = len(partner.vat) == 9 and partner.vat or partner.vat[2:]
+        if (vat[0] not in ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                           'J', 'U', 'V', 'N', 'P', 'Q', 'R', 'S', 'W')
+                and ',' in partner.name):
+            first_name = partner.name.split(',')[-1].strip()
+            first_surname = ' '.join([
+                x.strip() for x in partner.name.split(',')[:-1]
+            ])
+        else:
+            first_name = partner.name
+            first_surname = ''
+        if 'address_id' in context:
+            addr = addr_obj.get(context['address_id'])
+        else:
+            addr = partner.address[0]
+        res.append(false_to_none({
+            'id': partner.id,
+            'fiscalId': vat,
+            'firstName': first_name,
+            'firstSurname': first_surname,
+            'email': addr.email,
+            'address': {
+                'street': addr.nv,
+                'postalCode': addr.zip,
+                'city': addr.id_municipi.name,
+                'cityCode': addr.id_municipi.ine,
+                'province': addr.state_id.name,
+                'provinceCode': addr.state_id.code,
+                'country': addr.country_id.name,
+                'countryCode': addr.country_id.code,
+                'parcelNumber': addr.pnp
+            }
+        }, context))
     return res
 
 if __name__ == '__main__':
