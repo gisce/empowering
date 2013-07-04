@@ -112,7 +112,7 @@ def profile_to_amon(profiles):
         })
     return res
 
-def cups_to_amount(mp_uuids):
+def cups_to_amount(mp_uuids, context=None):
     """Convert CUPS to Amon.
 
     {
