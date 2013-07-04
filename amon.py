@@ -87,4 +87,5 @@ def profile_to_amon(profiles):
                 }
         ]
         })
+    return res
     
