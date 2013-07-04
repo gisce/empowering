@@ -42,7 +42,7 @@ def get_device_uuid(device_id):
 def make_utc_timestamp(timestamp):
     return times.to_universal(timestamp, 'Europe/Madrid').isoformat('T') + 'Z'
 
-def string_street(cups):
+def get_street_name(cups):
     street = []
     street_name = u''
     if cups.cpo or cups.cpa:
@@ -179,7 +179,7 @@ def cups_to_amount(mp_uuids, context=None):
             "metadata": {
                 'cupsnumber': cups.name,
                 'address': {
-                    'street': street_name,
+                    'street': get_street_name(cups),
                     'postalCode': cups.dp,
                     'city': cups.id_municipi.name,
                     'cityCode': cups.id_municipi.ine,
