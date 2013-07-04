@@ -204,7 +204,7 @@ def device_to_amon(device_uuids):
     for dev_uuid in device_uuids:
         res.append(false_to_none({
             "deviceId": dev_uuid,
-            "meteringPointId": DEVICE_MP_REL[device_uuid],
+            "meteringPointId": DEVICE_MP_REL[dev_uuid],
             "metadata": {
             }
         }))
