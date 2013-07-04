@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
 import sys
 import uuid
@@ -28,6 +31,26 @@ def get_cups_from_device(device_id):
 
 def make_utc_timestamp(timestamp):
     return times.to_universal(timestamp, 'Europe/Madrid').isoformat('T') + 'Z'
+
+def string_street(cups):
+    street = []
+    street_name = u''
+    if cups.cpo or cups.cpa:
+        street = u'CPO %s CPA %s' % (cups.cpo, cups.cpa)
+    else:
+        if cups.tv:
+            street.append(cups.tv.name)
+        if cups.nv:
+            street.append(cups.nv)
+        street_name += u' '.join(street)
+        street = [street_name]
+        for f_name, f in [(u'número', 'pnp'), (u'escalera', 'es'),
+                          (u'planta', 'pt'), (u'puerta', 'pu')]:
+            val = getattr(cups, f)
+            if val:
+                street.append(u'%s %s' % (f_name, val))
+    street_name = ', '.join(street)
+    return street_name
 
 def false_to_none(struct, context=None):
     if not context:
