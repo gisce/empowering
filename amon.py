@@ -290,6 +290,8 @@ if __name__ == '__main__':
     O = OOOP(**ooop_config)
     if len(sys.argv) > 1:
         limit = int(sys.argv[1])
+    else:
+        limit = 80
     profiles = O.TgProfile.search([], 0, limit)
     profiles = O.TgProfile.read(profiles)
     print profile_to_amon(profiles)
