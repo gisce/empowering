@@ -61,7 +61,11 @@ def get_street_name(cups):
 def datestring_to_epoch(date_string):
     if not date_string:
         return None
-    return datetime.strptime(date_string, '%Y-%m-%d').strftime('%s')
+    if not isinstance(date_string, datetime):
+        dt = datetime.strptime(date_string, '%Y-%m-%d')
+    else:
+        dt = date_string
+    return dt.strftime('%s')
 
 def false_to_none(struct, context=None):
     if not context:
@@ -248,13 +252,14 @@ def contract_to_amon(contract_ids, context=None):
             modcon = polissa.modcontractual_activa
         res.append(false_to_none({
             'id': str(uuid.uuid5(uuid.NAMESPACE_OID, polissa.name)),
-            'customerId': str(uuid.uuid5(uuid.NAMESPACE_OID, modcon.pagador.id)),
+            'ownerId': str(uuid.uuid5(uuid.NAMESPACE_OID, str(modcon.titular.id))),
+            'payerId': str(uuid.uuid5(uuid.NAMESPACE_OID, str(modcon.pagador.id))),
             'start': datestring_to_epoch(times.to_universal(modcon.data_inici, 'Europe/Madrid')),
             'end': datestring_to_epoch(times.to_universal(modcon.data_final, 'Europe/Madrid')),
             'tariffId': modcon.tarifa.name,
             'power': int(modcon.potencia * 1000),
             'version': modcon.name,
-            'activityCode': modcon.cnae.name,
+            'activityCode': modcon.cnae and modcon.cnae.name or None,
             'meteringPointId': str(uuid.uuid5(uuid.NAMESPACE_OID, modcon.cups.name)),
         }, context))
     return res
@@ -346,8 +351,11 @@ if __name__ == '__main__':
     profiles_json = profile_to_amon(profiles)
     cups_json = cups_to_amon(CUPS_UUIDS.keys())
     device_json = device_to_amon(DEVICE_MP_REL.keys())
+    pids = O.GiscedataPolissa.search([('cups.id', 'in', CUPS_UUIDS.values())])
+    contracts_json = contract_to_amon(pids)
     print "Total generated:"
     print "  Profiles: %s" % len(profiles_json)
     print "  CUPS: %s" % len(cups_json)
     print "  Devices: %s" % len(device_json)
+    print "  Contracts: %s" % len(contracts_json)
     
