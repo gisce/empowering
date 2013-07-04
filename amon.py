@@ -1,5 +1,7 @@
 import os
+import sys
 import uuid
+
 import times
 from ooop import OOOP
 
@@ -180,4 +182,8 @@ if __name__ == '__main__':
     print "Using OOOP CONFIG: %s" % ooop_config
 
     O = OOOP(**ooop_config)
+    if sys.argv[1] == 'test':
+        pids = O.ResPartner.search([], 0, 80)
+        print partner_data(pids)
+    
     
