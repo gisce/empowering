@@ -20,7 +20,7 @@ def get_cups_from_device(device_id):
             res = False
         else:
             cid = O.GiscedataLecturesComptador.get(cid[0])
-            res = uuid.uuid5(uuid.NAMESPACE_OID, cid.polissa_id.cups.name)
+            res = str(uuid.uuid5(uuid.NAMESPACE_OID, cid.polissa.cups.name))
         CUPS_CACHE[device_id] = res
         return res
 
@@ -77,9 +77,12 @@ def profile_to_amon(profiles):
     if not hasattr(profiles, '__iter__'):
         profiles = [profiles]
     for profile in profiles:
+        mp_uuid = get_cups_from_device(profile['name'])
+        if not mp_uuid:
+            continue
         res.append({
-            "deviceId": uuid.uuid5(uuid.NAMESPACE_OID, profile['name']),
-            "meteringPointId": get_cups_from_device(profile['name'])
+            "deviceId": str(uuid.uuid5(uuid.NAMESPACE_OID, profile['name'])),
+            "meteringPointId": mp_uuid,
             "readings": [
                 {
                     "type":  "electricityConsumption",
@@ -130,8 +133,8 @@ def partner_data(partner_ids, context=None):
       }
     }
     """
-    if not hasattr(partners_ids, '__iter__'):
-        partners_ids = [partners_ids]
+    if not hasattr(partner_ids, '__iter__'):
+        partner_ids = [partner_ids]
     addr_obj = O.ResPartnerAddress
     if not context:
         context = {}
@@ -153,6 +156,7 @@ def partner_data(partner_ids, context=None):
             addr = addr_obj.get(context['address_id'])
         else:
             addr = partner.address[0]
+        print addr.read()
         res.append(false_to_none({
             'id': partner.id,
             'fiscalId': vat,
@@ -175,15 +179,20 @@ def partner_data(partner_ids, context=None):
 
 if __name__ == '__main__':
     ooop_config = {}
-    for key, value in os.environ.values():
-    if key.startswith('OOOP_'):
-        key = key.lstrip('OOOP_').lower()
-        ooop_config[key] = value
+    for key, value in os.environ.items():
+        if key.startswith('OOOP_'):
+            key = key.split('_')[1].lower()
+            if key == 'port':
+                value = int(value)
+            ooop_config[key] = value
     print "Using OOOP CONFIG: %s" % ooop_config
 
     O = OOOP(**ooop_config)
     if sys.argv[1] == 'test':
-        pids = O.ResPartner.search([], 0, 80)
-        print partner_data(pids)
+        #pids = O.ResPartner.search([], 0, 80)
+        #print partner_data(pids)
+        profiles = O.TgProfile.search([], 0, 80)
+        profiles = O.TgProfile.read(profiles)
+        print profile_to_amon(profiles)
     
     
