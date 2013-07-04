@@ -1,5 +1,7 @@
+import os
 import uuid
 import times
+from ooop import OOOP
 
 CUPS_CACHE = {}
 UNITS = {'1': '', '1000': 'k'}
@@ -88,4 +90,14 @@ def profile_to_amon(profiles):
         ]
         })
     return res
+
+if __name__ == '__main__':
+    ooop_config = {}
+    for key, value in os.environ.values():
+    if key.startswith('OOOP_'):
+        key = key.lstrip('OOOP_').lower()
+        ooop_config[key] = value
+    print "Using OOOP CONFIG: %s" % ooop_config
+
+    O = OOOP(**ooop_config)
     
