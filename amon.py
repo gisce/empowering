@@ -6,6 +6,7 @@ import times
 from ooop import OOOP
 
 CUPS_CACHE = {}
+CUPS_UUIDS = {}
 UNITS = {'1': '', '1000': 'k'}
 
 def get_cups_from_device(device_id):
@@ -22,6 +23,7 @@ def get_cups_from_device(device_id):
             cid = O.GiscedataLecturesComptador.get(cid[0])
             res = str(uuid.uuid5(uuid.NAMESPACE_OID, cid.polissa.cups.name))
         CUPS_CACHE[device_id] = res
+        CUPS_UUIDS[res] = cid.polissa.cups.id
         return res
 
 def make_utc_timestamp(timestamp):
@@ -110,6 +112,52 @@ def profile_to_amon(profiles):
         })
     return res
 
+def cups_to_amount(mp_uuids):
+    """Convert CUPS to Amon.
+
+    {
+        "meteringPointId": uuid,
+        "metadata": {
+            "cupsnumber": "ES0987543210987654ZF",
+            "address": {
+                "street": "Calle y número",
+                "postalCode": "CodigoPostal",
+                "city": "Nombre ciudad",
+                "cityCode": "Código INE ciudad",
+                "province": "Nombre provincia",
+                "provinceCode": "Código INE provincia",
+                "country": "España",
+                "countryCode": "ES. Codigo según ISO 3166",
+                "parcelNumber": "Referencia catastral"
+            }
+        }
+    }
+    """
+    res = []
+    cups_obj = O.GiscedataCupsPs
+    if not hasattr(mp_uuids, '__iter__'):
+        mp_uuids = [mp_uuids]
+    for mp_uuid in mp_uuids:
+        cups = cups_obj.get(CUPS_UUIDS[mp_uuid])
+        res.append(false_to_none({
+            "meteringPointId": mp_uuid,
+            "metadata": {
+                'cupsnumber': cups.name,
+                'address': {
+                    'street': street_name,
+                    'postalCode': cups.dp,
+                    'city': cups.id_municipi.name,
+                    'cityCode': cups.id_municipi.ine,
+                    'province': cups.id_municipi.state.name,
+                    'provinceCode': cups.id_municipi.state.code,
+                    'country': cups.id_municipi.state.country_id.name,
+                    'countryCode': cups.id_municipi.state.country_id.code,
+                    'parcelNumber': cups.ref_catastral
+                }
+            },
+        }, context))
+    
+    
 def partner_data(partner_ids, context=None):
     """Convert a partner to JSON Format.
 
