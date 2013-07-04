@@ -288,12 +288,11 @@ if __name__ == '__main__':
     print "Using OOOP CONFIG: %s" % ooop_config
 
     O = OOOP(**ooop_config)
-    if sys.argv[1] == 'test':
-        #pids = O.ResPartner.search([], 0, 80)
-        #print partner_data(pids)
-        profiles = O.TgProfile.search([], 0, 80)
-        profiles = O.TgProfile.read(profiles)
-        print profile_to_amon(profiles)
-        print device_to_amon(DEVICE_MP_REL.keys())
+    if len(sys.argv) > 1:
+        limit = int(sys.argv[1])
+    profiles = O.TgProfile.search([], 0, limit)
+    profiles = O.TgProfile.read(profiles)
+    print profile_to_amon(profiles)
+    print device_to_amon(DEVICE_MP_REL.keys())
     
     
