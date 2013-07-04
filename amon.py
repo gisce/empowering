@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from datetime import datetime
 import os
 import sys
 import uuid
@@ -57,6 +58,11 @@ def get_street_name(cups):
                 street.append(u'%s %s' % (f_name, val))
     street_name = ', '.join(street)
     return street_name
+
+def datestring_to_epoch(date_string):
+    if not date_string:
+        return None
+    return datetime.strptime(date_string, '%Y-%m-%d').strftime('%s')
 
 def false_to_none(struct, context=None):
     if not context:
@@ -210,7 +216,49 @@ def device_to_amon(device_uuids):
             }
         }))
     return res
-    
+
+def contract_to_amon(contract_ids, context=None):
+    """Converts contracts to AMON.
+
+    {
+        "id": "uuid",
+        "owenerId": "uuid",
+        "payerId": "uuid",
+        "version": "2",
+        "start": 1332806400,
+        "end": 1362009600,
+        "tariffId": "2.0A",
+        "power": 3300,
+        "activityCode": "CNAE",
+        "meteringPointId": "c1759810-90f3-012e-0404-34159e211070",
+    }
+    """
+    if not context:
+        context = {}
+    res = []
+    pol = O.GiscedataPolissa
+    modcon_obj = O.GiscedataPolissaModcontractual
+    if not hasattr(contract_ids, '__iter__'):
+        contract_ids = [contract_ids]
+    for contract_id in contract_ids:
+        polissa = pol.get(contract_id)
+        if 'modcon_id' in context:
+            modcon = modcon_obj.get(context['modcon_id'])
+        else:
+            modcon = polissa.modcontractual_activa
+        res.append(false_to_none({
+            'id': str(uuid.uuid5(uuid.NAMESPACE_OID, polissa.name)),
+            'customerId': str(uuid.uuid5(uuid.NAMESPACE_OID, modcon.pagador.id)),
+            'start': datestring_to_epoch(times.to_universal(modcon.data_inici, 'Europe/Madrid')),
+            'end': datestring_to_epoch(times.to_universal(modcon.data_final, 'Europe/Madrid')),
+            'tariffId': modcon.tarifa.name,
+            'power': int(modcon.potencia * 1000),
+            'version': modcon.name,
+            'activityCode': modcon.cnae.name,
+            'meteringPointId': str(uuid.uuid5(uuid.NAMESPACE_OID, modcon.cups.name)),
+        }, context))
+    return res
+
 def partner_data(partner_ids, context=None):
     """Convert a partner to JSON Format.
 
