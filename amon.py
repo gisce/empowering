@@ -24,6 +24,8 @@ def get_cups_from_device(device_id):
     else:
         # Search de meter
         cid = O.GiscedataLecturesComptador.search([('name', '=', serial)])
+        if len(cid) > 1:
+            print serial
         if not cid:
             res = False
         else:
