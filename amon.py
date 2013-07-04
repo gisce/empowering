@@ -24,11 +24,10 @@ def get_cups_from_device(device_id):
     else:
         # Search de meter
         cid = O.GiscedataLecturesComptador.search([('name', '=', serial)])
-        if len(cid) > 1:
-            print serial
         if not cid:
             res = False
         else:
+            print cid
             cid = O.GiscedataLecturesComptador.get(cid[0])
             res = str(uuid.uuid5(uuid.NAMESPACE_OID, cid.polissa.cups.name))
         CUPS_CACHE[serial] = res
