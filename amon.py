@@ -142,7 +142,7 @@ def profile_to_amon(profiles):
         })
     return res
 
-def cups_to_amount(mp_uuids, context=None):
+def cups_to_amon(mp_uuids, context=None):
     """Convert CUPS to Amon.
 
     {
@@ -186,6 +186,7 @@ def cups_to_amount(mp_uuids, context=None):
                 }
             },
         }, context))
+    return res
 
 def device_to_amon(device_uuids):
     """Convert a device to AMON.
@@ -294,7 +295,11 @@ if __name__ == '__main__':
         limit = 80
     profiles = O.TgProfile.search([], 0, limit)
     profiles = O.TgProfile.read(profiles)
-    print profile_to_amon(profiles)
-    print device_to_amon(DEVICE_MP_REL.keys())
-    
+    profiles_json = profile_to_amon(profiles)
+    cups_json = cups_to_amon(CUPS_UUIDS.keys())
+    device_json = device_to_amon(DEVICE_MP_REL.keys())
+    print "Total generated:"
+    print "  Profiles: %s" % len(profiles_json)
+    print "  CUPS: %s" % len(cups_json)
+    print "  Devices: %s" % len(device_json)
     
