@@ -27,11 +27,10 @@ def get_cups_from_device(device_id):
         if not cid:
             res = False
         else:
-            print cid
             cid = O.GiscedataLecturesComptador.get(cid[0])
             res = str(uuid.uuid5(uuid.NAMESPACE_OID, cid.polissa.cups.name))
+            CUPS_UUIDS[res] = cid.polissa.cups.id
         CUPS_CACHE[serial] = res
-        CUPS_UUIDS[res] = cid.polissa.cups.id
         return res
         
 
