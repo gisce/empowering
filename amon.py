@@ -9,25 +9,35 @@ import times
 from ooop import OOOP
 
 CUPS_CACHE = {}
+DEVICE_MP_REL = {}
 CUPS_UUIDS = {}
 UNITS = {'1': '', '1000': 'k'}
 
+def get_device_serial(device_id):
+    return device_id[3:].lstrip('0')
+
 def get_cups_from_device(device_id):
     # Remove brand prefix and right zeros
-    device_id = device_id[3:].lstrip('0')
-    if device_id in CUPS_CACHE:
-        return CUPS_CACHE[device_id]
+    serial = get_device_serial(device_id)
+    if serial in CUPS_CACHE:
+        return CUPS_CACHE[serial]
     else:
         # Search de meter
-        cid = O.GiscedataLecturesComptador.search([('name', '=', device_id)])
+        cid = O.GiscedataLecturesComptador.search([('name', '=', serial)])
         if not cid:
             res = False
         else:
             cid = O.GiscedataLecturesComptador.get(cid[0])
             res = str(uuid.uuid5(uuid.NAMESPACE_OID, cid.polissa.cups.name))
-        CUPS_CACHE[device_id] = res
+        CUPS_CACHE[serial] = res
         CUPS_UUIDS[res] = cid.polissa.cups.id
         return res
+
+def get_device_uuid(device_id):
+    if device_id DEVICE_UUIDS:
+        return DEVICE_UUIDS[device_id]
+    else:
+        
 
 def make_utc_timestamp(timestamp):
     return times.to_universal(timestamp, 'Europe/Madrid').isoformat('T') + 'Z'
@@ -105,8 +115,10 @@ def profile_to_amon(profiles):
         mp_uuid = get_cups_from_device(profile['name'])
         if not mp_uuid:
             continue
+        device_uuid = str(uuid.uuid5(uuid.NAMESPACE_OID, profile['name']))
+        DEVICE_MP_REL[device_uuid] = mp_uuid
         res.append({
-            "deviceId": str(uuid.uuid5(uuid.NAMESPACE_OID, profile['name'])),
+            "deviceId": device_uuid,
             "meteringPointId": mp_uuid,
             "readings": [
                 {
@@ -179,7 +191,27 @@ def cups_to_amount(mp_uuids, context=None):
                 }
             },
         }, context))
-    
+
+def device_to_amon(device_uuids):
+    """Convert a device to AMON.
+
+    {
+        "deviceId": required string UUID,
+        "meteringPointId": required string UUID,
+        "metadata": {
+            # Think what we could put inside this
+        }, 
+    }
+    """
+    res = []
+    if not hasattr(device_uuids, '__iter__'):
+        device_uuids = [device_uuids]
+    for dev_uuid in device_uuids:
+        res.append(false_to_none({
+            "deviceId": dev_uuid,
+            "meteringPointId": DEVICE_MP_REL[device_uuid]
+        }))
+    return res
     
 def partner_data(partner_ids, context=None):
     """Convert a partner to JSON Format.
@@ -265,5 +297,6 @@ if __name__ == '__main__':
         profiles = O.TgProfile.search([], 0, 80)
         profiles = O.TgProfile.read(profiles)
         print profile_to_amon(profiles)
+        print device_to_amon(DEVICE_MP_REL.keys())
     
     
