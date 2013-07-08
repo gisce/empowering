@@ -4,6 +4,7 @@
 from datetime import datetime
 import os
 import sys
+import urllib
 import uuid
 
 import times
@@ -13,6 +14,15 @@ CUPS_CACHE = {}
 DEVICE_MP_REL = {}
 CUPS_UUIDS = {}
 UNITS = {'1': '', '1000': 'k'}
+
+REST_SERVER = 'http://localhost:5000'
+
+
+def make_post_data(json_list):
+    post_data = {}
+    for idx, item in enumerate(json_list):
+        post_data['item%s' % idx] = item
+    return urllib.urlencode(post_data)
 
 def get_device_serial(device_id):
     return device_id[3:].lstrip('0')
@@ -347,12 +357,24 @@ if __name__ == '__main__':
     else:
         limit = 80
     profiles = O.TgProfile.search([], 0, limit)
-    profiles = O.TgProfile.read(profiles)
+    profiles = O.TgProfile.read(profiles,)
     profiles_json = profile_to_amon(profiles)
+    profiles_post = make_post_data(profiles_json)
+    res = urllib.urlopen(REST_SERVER, profiles_post)
+    print res.read()
     cups_json = cups_to_amon(CUPS_UUIDS.keys())
+    cups_post = make_post_data(cups_json)
+    res = urllib.urlopen(REST_SERVER, cups_post)
+    print res.read()
     device_json = device_to_amon(DEVICE_MP_REL.keys())
+    device_post = make_post_data(device_json)
+    res = urllib.urlopen(REST_SERVER, device_post)
+    print res.read()
     pids = O.GiscedataPolissa.search([('cups.id', 'in', CUPS_UUIDS.values())])
     contracts_json = contract_to_amon(pids)
+    contracts_post = make_post_data(contracts_json)
+    res = urllib.urlopen(REST_SERVER, contracts_post)
+    print res.read()
     print "Total generated:"
     print "  Profiles: %s" % len(profiles_json)
     print "  CUPS: %s" % len(cups_json)
