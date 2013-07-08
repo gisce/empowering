@@ -136,7 +136,7 @@ def profile_to_amon(profiles):
         mp_uuid = get_cups_from_device(profile['name'])
         if not mp_uuid:
             continue
-        device_uuid = str(uuid.uuid5(uuid.NAMESPACE_OID, profile['name']))
+        device_uuid = make_uuid('giscedata.lectures.comptador', profile['name'])
         DEVICE_MP_REL[device_uuid] = mp_uuid
         res.append({
             "deviceId": device_uuid,
@@ -268,16 +268,16 @@ def contract_to_amon(contract_ids, context=None):
             modcon = polissa.modcontractual_activa
         PARTNERS.append(modcon.titular.id)
         res.append(remove_none({
-            'id': str(uuid.uuid5(uuid.NAMESPACE_OID, polissa.name)),
-            'ownerId': str(uuid.uuid5(uuid.NAMESPACE_OID, str(modcon.titular.id))),
-            'payerId': str(uuid.uuid5(uuid.NAMESPACE_OID, str(modcon.pagador.id))),
+            'id': make_uuid('giscedata.polissa', polissa.name),
+            'ownerId': make_uuid('res.partner', modcon.titular.id),
+            'payerId': make_uuid('res.partner', modcon.pagador.id),
             'start': datestring_to_epoch(times.to_universal(modcon.data_inici, 'Europe/Madrid')),
             'end': datestring_to_epoch(times.to_universal(modcon.data_final, 'Europe/Madrid')),
             'tariffId': modcon.tarifa.name,
             'power': int(modcon.potencia * 1000),
             'version': modcon.name,
             'activityCode': modcon.cnae and modcon.cnae.name or None,
-            'meteringPointId': str(uuid.uuid5(uuid.NAMESPACE_OID, modcon.cups.name)),
+            'meteringPointId': make_uuid('giscedata.cups.ps', modcon.cups.name),
         }, context))
     return res
 
@@ -328,7 +328,7 @@ def partners_to_amon(partner_ids, context=None):
                 continue
             addr = partner.address[0]
         res.append(remove_none({
-            'id': str(uuid.uuid5(uuid.NAMESPACE_OID, 'res.partner,'+str(partner.id))),
+            'id': make_uuid('res.partner', partner.id),
             'firstName': first_name,
             'firstSurname': first_surname,
             'address': {
