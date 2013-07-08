@@ -303,6 +303,7 @@ def partners_to_amon(partner_ids, context=None):
     """Convert a partner to JSON Format.
 
     {
+      "utilityId": "Utility id",
       "externalId": "sample string 1",
       "firstName": "sample string 3",
       "firstSurname": "sample string 4",
@@ -349,6 +350,7 @@ def partners_to_amon(partner_ids, context=None):
             else:
                 addr = partner.address[0]
         data = {
+            'utilityId': '1',
             'externalId': make_uuid('res.partner', partner.id),
             'firstName': first_name,
             'firstSurname': first_surname
