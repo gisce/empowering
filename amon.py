@@ -13,9 +13,15 @@ from ooop import OOOP
 CUPS_CACHE = {}
 DEVICE_MP_REL = {}
 CUPS_UUIDS = {}
+PARTNERS = []
 UNITS = {'1': '', '1000': 'k'}
 
 REST_SERVER = 'http://localhost:5000'
+
+
+def make_uuid(model, model_id):
+    token = '%s,%s' % (model, model_id)
+    return str(uuid.uuid5(uuid.NAMESPACE_OID, token))
 
 
 def make_post_data(json_list):
@@ -39,7 +45,7 @@ def get_cups_from_device(device_id):
             res = False
         else:
             cid = O.GiscedataLecturesComptador.get(cid[0])
-            res = str(uuid.uuid5(uuid.NAMESPACE_OID, cid.polissa.cups.name))
+            res = make_uuid('giscedata.cups.ps', cid.polissa.cups.name)
             CUPS_UUIDS[res] = cid.polissa.cups.id
         CUPS_CACHE[serial] = res
         return res
@@ -77,7 +83,7 @@ def datestring_to_epoch(date_string):
         dt = date_string
     return dt.strftime('%s')
 
-def false_to_none(struct, context=None):
+def remove_none(struct, context=None):
     if not context:
         context = {}
     if 'xmlrpc' in context:
@@ -85,10 +91,10 @@ def false_to_none(struct, context=None):
     converted = struct.copy()
     for key, value in struct.items():
         if isinstance(value, dict):
-            converted[key] = false_to_none(value)
+            converted[key] = remove_none(value)
         else:
-            if isinstance(value, bool) and not value:
-                converted[key] = None
+            if value is None or (isinstance(value, bool) and not value):
+                del converted[key]
     return converted
 
 def profile_to_amon(profiles):
@@ -189,7 +195,7 @@ def cups_to_amon(mp_uuids, context=None):
         mp_uuids = [mp_uuids]
     for mp_uuid in mp_uuids:
         cups = cups_obj.get(CUPS_UUIDS[mp_uuid])
-        res.append(false_to_none({
+        res.append(remove_none({
             "meteringPointId": mp_uuid,
             "metadata": {
                 'cupsnumber': cups.name,
@@ -223,7 +229,7 @@ def device_to_amon(device_uuids):
     if not hasattr(device_uuids, '__iter__'):
         device_uuids = [device_uuids]
     for dev_uuid in device_uuids:
-        res.append(false_to_none({
+        res.append(remove_none({
             "deviceId": dev_uuid,
             "meteringPointId": DEVICE_MP_REL[dev_uuid],
             "metadata": {
@@ -260,7 +266,8 @@ def contract_to_amon(contract_ids, context=None):
             modcon = modcon_obj.get(context['modcon_id'])
         else:
             modcon = polissa.modcontractual_activa
-        res.append(false_to_none({
+        PARTNERS.append(modcon.titular.id)
+        res.append(remove_none({
             'id': str(uuid.uuid5(uuid.NAMESPACE_OID, polissa.name)),
             'ownerId': str(uuid.uuid5(uuid.NAMESPACE_OID, str(modcon.titular.id))),
             'payerId': str(uuid.uuid5(uuid.NAMESPACE_OID, str(modcon.pagador.id))),
@@ -274,16 +281,14 @@ def contract_to_amon(contract_ids, context=None):
         }, context))
     return res
 
-def partner_data(partner_ids, context=None):
+def partners_to_amon(partner_ids, context=None):
     """Convert a partner to JSON Format.
 
     {
       "id": "sample string 1",
-      "fiscalId": "sample string 2",
       "firstName": "sample string 3",
       "firstSurname": "sample string 4",
       "secondSurname": "sample string 5",
-      "email": "sample string 6",
       "address": {
         "street": "sample string 1",
         "postalCode": "sample string 2",
@@ -319,24 +324,23 @@ def partner_data(partner_ids, context=None):
         if 'address_id' in context:
             addr = addr_obj.get(context['address_id'])
         else:
+            if not partner.address:
+                continue
             addr = partner.address[0]
-        print addr.read()
-        res.append(false_to_none({
-            'id': partner.id,
-            'fiscalId': vat,
+        res.append(remove_none({
+            'id': str(uuid.uuid5(uuid.NAMESPACE_OID, 'res.partner,'+str(partner.id))),
             'firstName': first_name,
             'firstSurname': first_surname,
-            'email': addr.email,
             'address': {
-                'street': addr.nv,
+                'street': addr.street,
                 'postalCode': addr.zip,
-                'city': addr.id_municipi.name,
-                'cityCode': addr.id_municipi.ine,
+                'city': addr.municipi and addr.municipi.name or None,
+                'cityCode': addr.municipi and addr.municipi.ine or None,
                 'province': addr.state_id.name,
                 'provinceCode': addr.state_id.code,
                 'country': addr.country_id.name,
                 'countryCode': addr.country_id.code,
-                'parcelNumber': addr.pnp
+                'parcelNumber': None
             }
         }, context))
     return res
@@ -375,9 +379,13 @@ if __name__ == '__main__':
     contracts_post = make_post_data(contracts_json)
     res = urllib.urlopen(REST_SERVER, contracts_post)
     print res.read()
+    partners_json = partners_to_amon(PARTNERS)
+    partners_post = make_post_data(partners_json)
+    res = urllib.urlopen(REST_SERVER, partners_post)
     print "Total generated:"
     print "  Profiles: %s" % len(profiles_json)
     print "  CUPS: %s" % len(cups_json)
     print "  Devices: %s" % len(device_json)
     print "  Contracts: %s" % len(contracts_json)
+    print "  Partners: %s" % len(partners_json)
     
