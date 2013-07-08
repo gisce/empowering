@@ -1,0 +1,1 @@
+Simple test to EMPOWERING REST services
