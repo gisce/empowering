@@ -6,6 +6,7 @@ import os
 import sys
 import urllib
 import uuid
+import json
 
 import times
 from ooop import OOOP
@@ -16,7 +17,7 @@ CUPS_UUIDS = {}
 PARTNERS = []
 UNITS = {'1': '', '1000': 'k'}
 
-REST_SERVER = 'http://localhost:5000'
+REST_SERVER = 'http://91.121.140.152/v1'
 
 
 def make_uuid(model, model_id):
@@ -27,7 +28,7 @@ def make_uuid(model, model_id):
 def make_post_data(json_list):
     post_data = {}
     for idx, item in enumerate(json_list):
-        post_data['item%s' % idx] = item
+        post_data['item%s' % idx] = json.dumps(item)
     return urllib.urlencode(post_data)
 
 def get_device_serial(device_id):
@@ -101,28 +102,29 @@ def profile_to_amon(profiles):
     """Return a list of AMON readinds.
 
     {
+        "utilityId": "Utility Id",
         "deviceId": "c1810810-0381-012d-25a8-0017f2cd3574",
         "meteringPointId": "c1759810-90f3-012e-0404-34159e211070",
         "readings": [
             {
-                "type": "electricityConsumption",
+                "type_": "electricityConsumption",
                 "unit": "kWh",
                 "period": "INSTANT",
             },
             {
-                "type": "electricityKiloVoltAmpHours",
+                "type_": "electricityKiloVoltAmpHours",
                 "unit": "kVArh",
                 "period": "INSTANT",
             }
         ],
         "measurements": [
             {
-                "type": "electricityConsumption",
+                "type_": "electricityConsumption",
                 "timestamp": "2010-07-02T11:39:09Z", # UTC
                 "value": 7
             },
             {
-                "type": "electricityKiloVoltAmpHours",
+                "type_": "electricityKiloVoltAmpHours",
                 "timestamp": "2010-07-02T11:44:09Z", # UTC
                 "value": 6
             }
@@ -139,28 +141,29 @@ def profile_to_amon(profiles):
         device_uuid = make_uuid('giscedata.lectures.comptador', profile['name'])
         DEVICE_MP_REL[device_uuid] = mp_uuid
         res.append({
+            "utilityId": "1",
             "deviceId": device_uuid,
             "meteringPointId": mp_uuid,
             "readings": [
                 {
-                    "type":  "electricityConsumption",
+                    "type_":  "electricityConsumption",
                     "unit": "%sWh" % UNITS[profile['magn']],
                     "period": "INSTANT",
                 },
                 {
-                    "type": "electricityKiloVoltAmpHours",
+                    "type_": "electricityKiloVoltAmpHours",
                     "unit": "%sVArh" % UNITS[profile['magn']],
                     "period": "INSTANT",
                 }
             ],
             "measurements": [
                 {
-                    "type": "electricityConsumption",
+                    "type_": "electricityConsumption",
                     "timestamp": make_utc_timestamp(profile['timestamp']),
                     "value": profile['ai']
                 },
                 {
-                    "type": "electricityKiloVoltAmpHours",
+                    "type_": "electricityKiloVoltAmpHours",
                     "timestamp": make_utc_timestamp(profile['timestamp']),
                     "value": profile['r1']
                 }
@@ -168,11 +171,12 @@ def profile_to_amon(profiles):
         })
     return res
 
-def cups_to_amon(mp_uuids, context=None):
+def cups_to_amon(cups_ids, context=None):
     """Convert CUPS to Amon.
 
     {
-        "meteringPointId": uuid,
+        "utilitId": "Utility Id",
+        "externalId": uuid,
         "metadata": {
             "cupsnumber": "ES0987543210987654ZF",
             "address": {
@@ -191,12 +195,13 @@ def cups_to_amon(mp_uuids, context=None):
     """
     res = []
     cups_obj = O.GiscedataCupsPs
-    if not hasattr(mp_uuids, '__iter__'):
-        mp_uuids = [mp_uuids]
-    for mp_uuid in mp_uuids:
-        cups = cups_obj.get(CUPS_UUIDS[mp_uuid])
+    if not hasattr(cups_ids, '__iter__'):
+        cups_ids = [cups_ids]
+    for cups_id in cups_ids:
+        cups = O.GiscedataCupsPs.get(cups_id)
         res.append(remove_none({
-            "meteringPointId": mp_uuid,
+            "utilityId": "1",
+            "externalId": make_uuid('giscedata.cups.ps', cups.name),
             "metadata": {
                 'cupsnumber': cups.name,
                 'address': {
@@ -214,25 +219,35 @@ def cups_to_amon(mp_uuids, context=None):
         }, context))
     return res
 
-def device_to_amon(device_uuids):
+def device_to_amon(device_ids):
     """Convert a device to AMON.
 
     {
-        "deviceId": required string UUID,
+        "utilityId": "Utility Id",
+        "externalId": required string UUID,
         "meteringPointId": required string UUID,
         "metadata": {
-            # Think what we could put inside this
+            "max": "Max number",
+            "serial": "Device serial",
+            "owner": "empresa/client"
         }, 
     }
     """
     res = []
-    if not hasattr(device_uuids, '__iter__'):
-        device_uuids = [device_uuids]
-    for dev_uuid in device_uuids:
+    if not hasattr(device_ids, '__iter__'):
+        device_ids = [device_ids]
+    for dev_id in device_ids:
+        dev = O.GiscedataLecturesComptador.get(dev_id)
+        if dev.propietat == "empresa":
+            dev.propietat = "company"
         res.append(remove_none({
-            "deviceId": dev_uuid,
-            "meteringPointId": DEVICE_MP_REL[dev_uuid],
+            "utilityId": "1",
+            "externalId": make_uuid('giscedata.lectures.comptador', dev_id),
+            "meteringPointId": make_uuid('giscedata.cups.ps', dev.polissa.cups.name),
             "metadata": {
+               "max": dev.giro,
+               "serial": dev.name,
+               "owner": dev.propietat, 
             }
         }))
     return res
@@ -266,16 +281,18 @@ def contract_to_amon(contract_ids, context=None):
             modcon = modcon_obj.get(context['modcon_id'])
         else:
             modcon = polissa.modcontractual_activa
+        PARTNERS.append(modcon.pagador.id)
         PARTNERS.append(modcon.titular.id)
         res.append(remove_none({
-            'id': make_uuid('giscedata.polissa', polissa.name),
+            'utilityId': '1',
+            'externalId': make_uuid('giscedata.polissa', polissa.name),
             'ownerId': make_uuid('res.partner', modcon.titular.id),
             'payerId': make_uuid('res.partner', modcon.pagador.id),
-            'start': datestring_to_epoch(times.to_universal(modcon.data_inici, 'Europe/Madrid')),
-            'end': datestring_to_epoch(times.to_universal(modcon.data_final, 'Europe/Madrid')),
+            'start': make_utc_timestamp(modcon.data_inici),
+            'end': make_utc_timestamp(modcon.data_final),
             'tariffId': modcon.tarifa.name,
             'power': int(modcon.potencia * 1000),
-            'version': modcon.name,
+            'version': int(modcon.name),
             'activityCode': modcon.cnae and modcon.cnae.name or None,
             'meteringPointId': make_uuid('giscedata.cups.ps', modcon.cups.name),
         }, context))
@@ -285,7 +302,7 @@ def partners_to_amon(partner_ids, context=None):
     """Convert a partner to JSON Format.
 
     {
-      "id": "sample string 1",
+      "externalId": "sample string 1",
       "firstName": "sample string 3",
       "firstSurname": "sample string 4",
       "secondSurname": "sample string 5",
@@ -310,6 +327,8 @@ def partners_to_amon(partner_ids, context=None):
     res = []
     for partner_id in partner_ids:
         partner = O.ResPartner.get(partner_id)
+        if not partner.vat:
+            partner.vat = '40000'
         vat = len(partner.vat) == 9 and partner.vat or partner.vat[2:]
         if (vat[0] not in ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
                            'J', 'U', 'V', 'N', 'P', 'Q', 'R', 'S', 'W')
@@ -325,24 +344,27 @@ def partners_to_amon(partner_ids, context=None):
             addr = addr_obj.get(context['address_id'])
         else:
             if not partner.address:
-                continue
-            addr = partner.address[0]
-        res.append(remove_none({
-            'id': make_uuid('res.partner', partner.id),
+                addr = False
+            else:
+                addr = partner.address[0]
+        data = {
+            'externalId': make_uuid('res.partner', partner.id),
             'firstName': first_name,
-            'firstSurname': first_surname,
-            'address': {
+            'firstSurname': first_surname
+        }
+        if addr:
+            data['address'] = {
                 'street': addr.street,
                 'postalCode': addr.zip,
                 'city': addr.municipi and addr.municipi.name or None,
                 'cityCode': addr.municipi and addr.municipi.ine or None,
-                'province': addr.state_id.name,
-                'provinceCode': addr.state_id.code,
-                'country': addr.country_id.name,
-                'countryCode': addr.country_id.code,
+                'province': addr.state_id and addr.state_id.name or None,
+                'provinceCode': addr.state_id and addr.state_id.code or None,
+                'country': addr.country_id and addr.country_id.name or None,
+                'countryCode': addr.country_id and addr.country_id.code or None,
                 'parcelNumber': None
             }
-        }, context))
+        res.append(remove_none(data, context))
     return res
 
 if __name__ == '__main__':
@@ -361,31 +383,46 @@ if __name__ == '__main__':
     else:
         limit = 80
     profiles = O.TgProfile.search([], 0, limit)
-    profiles = O.TgProfile.read(profiles,)
-    profiles_json = profile_to_amon(profiles)
-    profiles_post = make_post_data(profiles_json)
-    res = urllib.urlopen(REST_SERVER, profiles_post)
-    print res.read()
-    cups_json = cups_to_amon(CUPS_UUIDS.keys())
-    cups_post = make_post_data(cups_json)
-    res = urllib.urlopen(REST_SERVER, cups_post)
-    print res.read()
-    device_json = device_to_amon(DEVICE_MP_REL.keys())
-    device_post = make_post_data(device_json)
-    res = urllib.urlopen(REST_SERVER, device_post)
-    print res.read()
-    pids = O.GiscedataPolissa.search([('cups.id', 'in', CUPS_UUIDS.values())])
-    contracts_json = contract_to_amon(pids)
-    contracts_post = make_post_data(contracts_json)
-    res = urllib.urlopen(REST_SERVER, contracts_post)
-    print res.read()
-    partners_json = partners_to_amon(PARTNERS)
-    partners_post = make_post_data(partners_json)
-    res = urllib.urlopen(REST_SERVER, partners_post)
-    print "Total generated:"
-    print "  Profiles: %s" % len(profiles_json)
-    print "  CUPS: %s" % len(cups_json)
-    print "  Devices: %s" % len(device_json)
-    print "  Contracts: %s" % len(contracts_json)
-    print "  Partners: %s" % len(partners_json)
+    idx = 0
+    packet_size = 10000
+    print "Tenim %s profiles" % len(profiles)
+    while idx < 10000:
+    	pids = profiles[idx:idx+packet_size]
+        print "Doing %s..%s of %s" % (idx, idx + packet_size, len(profiles))
+        idx += packet_size
+        profiles_ = O.TgProfile.read(pids)
+        profiles_json = profile_to_amon(profiles_)
+        profiles_post = make_post_data(profiles_json)
+        res = urllib.urlopen(REST_SERVER + '/measures/', profiles_post)
+        res.read()
+        print "Posted!"
+    print "Done!"
+    #CUPS_IDS = O.GiscedataCupsPs.search([], 0, 100)
+    #cups_json = cups_to_amon(CUPS_IDS)
+    #cups_post = make_post_data(cups_json)
+    #res = urllib.urlopen(REST_SERVER + '/metering_points/', cups_post)
+    #print res.read()
+    #DEVICE_IDS = O.GiscedataLecturesComptador.search([], 0, 100)
+    #device_json = device_to_amon(DEVICE_IDS)
+    #device_post = make_post_data(device_json)
+    #res = urllib.urlopen(REST_SERVER + '/meter_devices/', device_post)
+    #print res.read()
+    #pids = O.GiscedataPolissa.search([('cups.id', 'in', CUPS_UUIDS.values())])
+    #pids = O.GiscedataPolissa.search([], 0, 100)
+    #contracts_json = contract_to_amon(pids)
+    #contracts_post = make_post_data(contracts_json)
+    #res = urllib.urlopen(REST_SERVER + '/contracts/', contracts_post)
+    #print res.read()
+    #PARTNERS = O.ResPartner.search([], 0, 80)
+    #partners_json = partners_to_amon(set(PARTNERS))
+    #print partners_json
+    #partners_post = make_post_data(partners_json)
+    #res = urllib.urlopen(REST_SERVER + '/owners/', partners_post)
+    #print res.read()
+    #print "Total generated:"
+    #print "  Profiles: %s" % len(profiles_json)
+    #print "  CUPS: %s" % len(cups_json)
+    #print "  Devices: %s" % len(device_json)
+    #print "  Contracts: %s" % len(contracts_json)
+    #print "  Partners: %s" % len(partners_json)
     
