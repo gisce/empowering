@@ -256,7 +256,8 @@ def contract_to_amon(contract_ids, context=None):
     """Converts contracts to AMON.
 
     {
-        "id": "uuid",
+        "utilityId": "Utility Id",
+        "externalId": "uuid",
         "owenerId": "uuid",
         "payerId": "uuid",
         "version": "2",
