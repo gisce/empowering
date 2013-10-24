@@ -10,9 +10,9 @@ def main(path):
     for key, value in request.headers:
         print "%s: %s" % (key, value)
     if request.json:
-        print request.json
+        print 'JSON: %s' % request.json
     else:
-        print request.data
+        print 'DATA: %s' % request.data
     return "200"
 
 
