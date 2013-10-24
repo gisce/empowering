@@ -23,9 +23,9 @@ class EmpoweringResource(base.RESTResource):
         return request, parsers.parse_json
 
     @base.apimethod
-    def delete(self, etag):
+    def delete(self, obj, etag):
         self.require_item()
-        request = http.Request('DELETE', self.get_url(),
+        request = http.Request('DELETE', self.get_url(), self.wrap_object(obj),
                                headers={"If-Match": etag})
         return request, parsers.parse_json
 
@@ -37,9 +37,33 @@ class Contracts(EmpoweringResource):
 class AmonMeasures(EmpoweringResource):
     path = 'amon_measures'
 
+    @base.apimethod
+    def get(self):
+        raise base.MethodNotSupported
+
+    @base.apimethod
+    def update(self, obj, etag):
+        raise base.MethodNotSupported
+
+    @base.apimethod
+    def delete(self, obj, etag):
+        raise base.MethodNotSupported
+
 
 class Measures(EmpoweringResource):
     path = 'measures'
+
+    @base.apimethod
+    def get(self):
+        raise base.MethodNotSupported
+
+    @base.apimethod
+    def create(self, obj):
+        raise base.MethodNotSupported
+
+    @base.apimethod
+    def update(self, obj, etag):
+        raise base.MethodNotSupported
 
     @base.apimethod
     def delete(self, start=None, end=None):
