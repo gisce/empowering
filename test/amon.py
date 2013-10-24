@@ -150,26 +150,26 @@ def profile_to_amon(profiles):
             "meteringPointId": mp_uuid,
             "readings": [
                 {
-                    "type_":  "electricityConsumption",
+                    "type":  "electricityConsumption",
                     "unit": "%sWh" % UNITS[profile['magn']],
                     "period": "INSTANT",
                 },
                 {
-                    "type_": "electricityKiloVoltAmpHours",
+                    "type": "electricityKiloVoltAmpHours",
                     "unit": "%sVArh" % UNITS[profile['magn']],
                     "period": "INSTANT",
                 }
             ],
             "measurements": [
                 {
-                    "type_": "electricityConsumption",
+                    "type": "electricityConsumption",
                     "timestamp": make_utc_timestamp(profile['timestamp']),
-                    "value": profile['ai']
+                    "value": float(profile['ai'])
                 },
                 {
-                    "type_": "electricityKiloVoltAmpHours",
+                    "type": "electricityKiloVoltAmpHours",
                     "timestamp": make_utc_timestamp(profile['timestamp']),
-                    "value": profile['r1']
+                    "value": float(profile['r1'])
                 }
         ]
         })
