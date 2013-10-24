@@ -22,6 +22,13 @@ class EmpoweringResource(base.RESTResource):
                                headers={"If-Match": etag})
         return request, parsers.parse_json
 
+    @base.apimethod
+    def delete(self, etag):
+        self.require_item()
+        request = http.Request('DELETE', self.get_url(),
+                               headers={"If-Match": etag})
+        return request, parsers.parse_json
+
 
 class Contracts(EmpoweringResource):
     path = 'contracts'
@@ -31,13 +38,23 @@ class AmonMeasures(EmpoweringResource):
     path = 'amon_measures'
 
 
+class Measures(EmpoweringResource):
+    path = 'measures'
+
+    @base.apimethod
+    def delete(self, start=None, end=None):
+        params = base.get_params(('start', 'end'), locals())
+        request = http.Request('DELETE', self.get_url())
+        return request, parsers.parse_json
+
 class Empowering(base.Resource):
     """
     Empowering Insight Engine Service API.
     """
     def __init__(self, company_id, version='v1'):
         self.token = company_id
-        endpoint = "http://localhost:5000"
+        endpoint = "http://91.121.140.152:5001"
+        #endpoint = "http://localhost:5000"
         self.apiroot = '%s/%s' % (endpoint, version)
         self.add_filter(self.use_json)
 
@@ -52,6 +69,10 @@ class Empowering(base.Resource):
     @base.resource(AmonMeasures)
     def amon_measures(self):
         return AmonMeasures(self)
+
+    @base.resource(Measures)
+    def measures(self):
+        return Measures(self)
 
     @base.resource(Contracts)
     def contract(self, contract_id):
