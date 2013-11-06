@@ -20,7 +20,7 @@ install_requires = [
 
 setup(
     name='empowering',
-    version='0.1.0-alpha',
+    version='0.1.0-alpha1',
     author='GISCE-TI, S.L.',
     author_email='devel@gisce.net',
     url='http://code.gisce.net/empowering',
