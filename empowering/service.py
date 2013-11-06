@@ -8,26 +8,40 @@ empowering.service
 
 
 import json
+from libsaas.parsers import parse_json
 
 from libsaas.services import base
 from libsaas import http, parsers
+
+
+class EtagConcurrencyError(Exception):
+    pass
+
+
+def parse_eve(body, code, headers):
+    if code == 412:
+        raise EtagConcurrencyError
+    else:
+        return parse_json(body, code, headers)
 
 
 class EmpoweringResource(base.RESTResource):
 
     @base.apimethod
     def update(self, obj, etag):
+        """412 means etag concurrency error.
+        """
         self.require_item()
         request = http.Request('PATCH', self.get_url(), self.wrap_object(obj),
                                headers={"If-Match": etag})
-        return request, parsers.parse_json
+        return request, parse_eve
 
     @base.apimethod
     def delete(self, obj, etag):
         self.require_item()
         request = http.Request('DELETE', self.get_url(), self.wrap_object(obj),
                                headers={"If-Match": etag})
-        return request, parsers.parse_json
+        return request, parse_eve
 
 
 class Contracts(EmpoweringResource):
