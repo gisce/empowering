@@ -8,7 +8,6 @@ empowering.service
 
 
 import json
-from libsaas.parsers import parse_json
 
 from libsaas.services import base
 from libsaas import http, parsers
@@ -22,7 +21,7 @@ def parse_eve(body, code, headers):
     if code == 412:
         raise EtagConcurrencyError
     else:
-        return parse_json(body, code, headers)
+        return parsers.parse_json(body, code, headers)
 
 
 class EmpoweringResource(base.RESTResource):
