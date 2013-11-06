@@ -28,8 +28,6 @@ class EmpoweringResource(base.RESTResource):
 
     @base.apimethod
     def update(self, obj, etag):
-        """412 means etag concurrency error.
-        """
         self.require_item()
         request = http.Request('PATCH', self.get_url(), self.wrap_object(obj),
                                headers={"If-Match": etag})
