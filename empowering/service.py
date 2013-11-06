@@ -23,9 +23,8 @@ class EmpoweringResource(base.RESTResource):
         return request, parsers.parse_json
 
     @base.apimethod
-    def delete(self, obj, etag):
-        self.require_item()
-        request = http.Request('DELETE', self.get_url(), self.wrap_object(obj),
+    def delete(self, etag):
+        request = http.Request('DELETE', self.get_url(),
                                headers={"If-Match": etag})
         return request, parsers.parse_json
 
