@@ -17,6 +17,17 @@ CUPS_UUIDS = {}
 PARTNERS = []
 UNITS = {'1': '', '1000': 'k'}
 
+class Popper(object):
+    def __init__(self, items):
+        self.items = items[:]
+
+    def pop(self, n):
+        res = []
+        for x in xrange(0, min(n, len(self.items))):
+            res.append(self.items.pop())
+        return res
+
+
 def remove_none(struct, context=None):
     if not context:
         context = {}
@@ -74,18 +85,18 @@ def make_utc_timestamp(timestamp):
 def get_street_name(cups):
     street = []
     street_name = u''
-    if cups.cpo or cups.cpa:
-        street = u'CPO %s CPA %s' % (cups.cpo, cups.cpa)
+    if cups['cpo'] or cups['cpa']:
+        street = u'CPO %s CPA %s' % (cups['cpo'], cups['cpa'])
     else:
-        if cups.tv:
-            street.append(cups.tv.name)
-        if cups.nv:
-            street.append(cups.nv)
+        if cups['tv']:
+            street.append(cups['tv'][1])
+        if cups['nv']:
+            street.append(cups['nv'])
         street_name += u' '.join(street)
         street = [street_name]
         for f_name, f in [(u'número', 'pnp'), (u'escalera', 'es'),
                           (u'planta', 'pt'), (u'puerta', 'pu')]:
-            val = getattr(cups, f)
+            val = cups.get(f, '')
             if val:
                 street.append(u'%s %s' % (f_name, val))
     street_name = ', '.join(street)
@@ -249,46 +260,56 @@ def contract_to_amon(contract_ids, context=None):
     res = []
     pol = O.GiscedataPolissa
     modcon_obj = O.GiscedataPolissaModcontractual
+    cups_obj = O.GiscedataCupsPs
+    muni_obj = O.ResMunicipi
+    compt_obj = O.GiscedataLecturesComptador
     if not hasattr(contract_ids, '__iter__'):
         contract_ids = [contract_ids]
-    for contract_id in contract_ids:
-        polissa = pol.get(contract_id)
+    fields_to_read = ['modcontractual_activa', 'name', 'cups', 'comptadors']
+    for polissa in pol.read(contracts_ids, fields_to_read):
+    #for contract_id in contract_ids:
+        #polissa = pol.get(contract_id)
         if 'modcon_id' in context:
             modcon = modcon_obj.get(context['modcon_id'])
         else:
-            modcon = polissa.modcontractual_activa
-        PARTNERS.append(modcon.pagador.id)
-        PARTNERS.append(modcon.titular.id)
+            modcon = modcon_obj.read(polissa['modcontractual_activa'][0])
+        PARTNERS.append(modcon['pagador'][0])
+        PARTNERS.append(modcon['titular'][0])
+        cups_fields = ['id_municipi', 'tv', 'nv', 'cpa', 'cpo', 'pnp', 'pt',
+                       'es', 'pu', 'dp']
+        cups = cups_obj.read(polissa['cups'][0], cups_fields)
+        ine = muni_obj.read(cups['id_municipi'][0], ['ine'])['ine']
         contract = {
             'companyId': 8449512768,
-            'ownerId': make_uuid('res.partner', modcon.titular.id),
-            'payerId': make_uuid('res.partner', modcon.pagador.id),
-            'dateStart': make_utc_timestamp(modcon.data_inici),
-            'dateEnd': make_utc_timestamp(modcon.data_final),
-            'contractId': polissa.name,
-            'tariffId': modcon.tarifa.name,
-            'power': int(modcon.potencia * 1000),
-            'version': int(modcon.name),
-            'activityCode': modcon.cnae and modcon.cnae.name or None,
-            'meteringPointId': make_uuid('giscedata.cups.ps', modcon.cups.name),
+            'ownerId': make_uuid('res.partner', modcon['titular'][0]),
+            'payerId': make_uuid('res.partner', modcon['pagador'][0]),
+            'dateStart': make_utc_timestamp(modcon['data_inici']),
+            'dateEnd': make_utc_timestamp(modcon['data_final']),
+            'contractId': polissa['name'],
+            'tariffId': modcon['tarifa'][1],
+            'power': int(modcon['potencia'] * 1000),
+            'version': int(modcon['name']),
+            'activityCode': modcon['cnae'] and modcon['cnae'][1] or None,
+            'meteringPointId': make_uuid('giscedata.cups.ps', modcon['cups'][1]),
             'customer': {
-                'customerId': make_uuid('res.partner', modcon.titular.id),
+                'customerId': make_uuid('res.partner', modcon['titular'][0]),
                 'address': {
-                    'city': polissa.cups.id_municipi.name,
-                    'cityCode': polissa.cups.id_municipi.ine,
-                    'countryCode': polissa.cups.id_provincia.country_id.code,
-                    'street': get_street_name(polissa.cups),
-                    'postalCode': polissa.cups.dp
+                    'city': cups['id_municipi'][1],
+                    'cityCode': ine,
+                    'countryCode': 'ES',
+                    'street': get_street_name(cups),
+                    'postalCode': cups['dp']
                 }
             }
         }
         devices = []
-        for comptador in polissa.comptadors:
+        comptador_fields = ['data_alta', 'data_baixa']
+        for comptador in compt_obj.read(polissa['comptadors'], comptador_fields):
             devices.append({
-                'dateStart': make_utc_timestamp(comptador.data_alta),
-                'dateEnd': make_utc_timestamp(comptador.data_baixa),
+                'dateStart': make_utc_timestamp(comptador['data_alta']),
+                'dateEnd': make_utc_timestamp(comptador['data_baixa']),
                 'deviceId': make_uuid('giscedata.lectures.comptador',
-                                      comptador.id)
+                                      compt_obj.build_name_tg(comptador['id']))
             })
         contract['devices'] = devices
         res.append(remove_none(contract, context))
@@ -376,22 +397,40 @@ if __name__ == '__main__':
     print "Using OOOP CONFIG: %s" % ooop_config
 
     O = OOOP(**ooop_config)
-    if len(sys.argv) > 1:
-        limit = int(sys.argv[1])
-    else:
-        limit = 80
     from empowering import Empowering
     em = Empowering(8449512768)
-    if sys.argv[2] == 'push_amon_measures':
-        profiles_ids = O.TgProfile.search([], 0, limit)
-        profiles = O.TgProfile.read(profiles_ids)
-        profiles_to_push = profile_to_amon(profiles)
-        print em.amon_measures().create(profiles_to_push)
-    elif sys.argv[2] == 'push_contracts':
-        contracts_ids = O.GiscedataPolissa.search([], 0, limit)
-        contracts_to_push = contract_to_amon(contracts_ids)
-        print em.contracts().create(contracts_to_push)
-    elif sys.argv[2] == 'get_contracts':
+    if sys.argv[1] == 'push_amon_measures':
+        profiles_ids = O.TgProfile.search([])
+        popper = Popper(profiles_ids)
+        bucket = 500
+        pops = popper.pop(bucket)
+        while pops:
+            print "Queden %s items" % len(popper.items)
+            profiles = O.TgProfile.read(pops)
+            profiles_to_push = profile_to_amon(profiles)
+            #print profiles_to_push
+            measures = em.amon_measures().create(profiles_to_push)
+            print "%s measures creades" % len(measures)
+            pops = popper.pop(bucket)
+    elif sys.argv[1] == 'push_contracts':
+        cids = O.GiscedataLecturesComptador.search([('tg', '=', 1)])
+        contracts_ids = [
+            x['polissa'][0]
+            for x in O.GiscedataLecturesComptador.read(cids, ['polissa'])
+        ]
+        popper = Popper(contracts_ids)
+        bucket = 500
+        pops = popper.pop(bucket)
+        while pops:
+            print "Queden %s items" % len(popper.items)
+            contracts_to_push = contract_to_amon(pops)
+            res = em.contracts().create(contracts_to_push)
+            for idx, resp in enumerate(res):
+                print idx, resp
+                pol_id = [contracts_ids[idx]]
+                O.GiscedataPolissa.write(pol_id, {'etag': resp['etag']})
+            pops = popper.pop(bucket)
+    elif sys.argv[1] == 'get_contracts':
         print em.contracts().get()
-    elif sys.argv[2] == 'get_contract':
-        print em.contract(sys.argv[3]).get()
+    elif sys.argv[1] == 'get_contract':
+        print em.contract(sys.argv[2]).get()

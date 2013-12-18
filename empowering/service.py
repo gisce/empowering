@@ -76,7 +76,7 @@ class Empowering(base.Resource):
     """
     def __init__(self, company_id, version='v1'):
         self.token = company_id
-        endpoint = "http://91.121.140.152:5001"
+        endpoint = "http://91.121.140.152:5011"
         #endpoint = "http://localhost:5000"
         self.apiroot = '%s/%s' % (endpoint, version)
         self.add_filter(self.use_json)
