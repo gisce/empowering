@@ -34,3 +34,23 @@ class Contract(Serializer):
     meteringPointId = fields.UUID()
     customer = fields.Nested(Customer)
     devices = fields.List(fields.Nested(Device))
+
+
+class Reading(Serializer):
+    type = fields.Selection(['electricityConsumption'])
+    unit = fields.Selection(['kWh', 'Wh'])
+    period = fields.Selection(['INSTANT', 'CUMULATIVE', 'PULSE'])
+
+
+class Measurement(Serializer):
+    type = fields.Selection(['electricityConsumption'])
+    timestamp = fields.DateTime(format='iso')
+    value = fields.Float()
+
+
+class AmonMeasure(Serializer):
+    companyId = fields.Integer()
+    deviceId = fields.UUID()
+    meteringPointId = fields.UUID()
+    readings = fields.List(fields.Nested(Reading))
+    measurements = fields.List(fields.Nested(Measurement))
