@@ -75,16 +75,19 @@ class Empowering(base.Resource):
     Empowering Insight Engine Service API.
     """
     def __init__(self, company_id, version='v1'):
-        self.token = company_id
-        endpoint = "http://91.121.140.152:5011"
-        #endpoint = "http://localhost:5000"
+        self.company_id = company_id
+        endpoint = "https://api.empowering.cimne.com"
         self.apiroot = '%s/%s' % (endpoint, version)
         self.add_filter(self.use_json)
+        self.add_filter(self.add_company_id)
 
     def use_json(self, request):
         if request.method.upper() not in http.URLENCODE_METHODS:
             request.headers['Content-Type'] = 'application/json'
             request.params = json.dumps(request.params)
+
+    def add_company_id(self, request):
+        request.headers['X-CompanyId'] = self.company_id
 
     def get_url(self):
         return self.apiroot
