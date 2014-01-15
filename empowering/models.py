@@ -21,7 +21,6 @@ class Device(Serializer):
 
 
 class Contract(Serializer):
-    companyId = fields.Integer()
     ownerId = fields.UUID()
     payerId = fields.UUID()
     dateStart = fields.DateTime(format='iso')
@@ -49,7 +48,6 @@ class Measurement(Serializer):
 
 
 class AmonMeasure(Serializer):
-    companyId = fields.Integer()
     deviceId = fields.UUID()
     meteringPointId = fields.UUID()
     readings = fields.List(fields.Nested(Reading))
