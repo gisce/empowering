@@ -37,13 +37,13 @@ class Contract(Serializer):
 
 
 class Reading(Serializer):
-    type = fields.Selection(['electricityConsumption'])
-    unit = fields.Selection(['kWh', 'Wh'])
-    period = fields.Selection(['INSTANT', 'CUMULATIVE', 'PULSE'])
+    type = fields.Select(['electricityConsumption'])
+    unit = fields.Select(['kWh', 'Wh'])
+    period = fields.Select(['INSTANT', 'CUMULATIVE', 'PULSE'])
 
 
 class Measurement(Serializer):
-    type = fields.Selection(['electricityConsumption'])
+    type = fields.Select(['electricityConsumption'])
     timestamp = fields.DateTime(format='iso')
     value = fields.Float()
 
