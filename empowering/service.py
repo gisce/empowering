@@ -11,7 +11,7 @@ import json
 
 from libsaas.services import base
 from libsaas import http, parsers
-from libsaas.executors import urllib2_cert_executor
+from libsaas.executors import urllib2_executor
 
 
 class EmpoweringResource(base.RESTResource):
@@ -85,7 +85,7 @@ class Empowering(base.Resource):
         self.add_filter(self.add_company_id)
 
         # We have to use SSL Client
-        urllib2_cert_executor.use(self.key_file, self.cert_file)
+        urllib2_executor.use(self.key_file, self.cert_file)
 
     def use_json(self, request):
         if request.method.upper() not in http.URLENCODE_METHODS:
