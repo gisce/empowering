@@ -156,7 +156,6 @@ def profile_to_amon(profiles):
             continue
         device_uuid = make_uuid('giscedata.lectures.comptador', profile['name'])
         res.append({
-            "companyId": 8449512768,
             "deviceId": device_uuid,
             "meteringPointId": mp_uuid,
             "readings": [
@@ -252,7 +251,6 @@ def contract_to_amon(contract_ids, context=None):
       "version":1,
       "activityCode":"activityCode",
       "tariffId":"tariffID-123",
-      "companyId":1234567890
     }
     """
     if not context:
@@ -265,14 +263,19 @@ def contract_to_amon(contract_ids, context=None):
     compt_obj = O.GiscedataLecturesComptador
     if not hasattr(contract_ids, '__iter__'):
         contract_ids = [contract_ids]
-    fields_to_read = ['modcontractual_activa', 'name', 'cups', 'comptadors']
-    for polissa in pol.read(contracts_ids, fields_to_read):
+    fields_to_read = ['modcontractual_activa', 'name', 'cups', 'comptadors', 'state']
+    for polissa in pol.read(contract_ids, fields_to_read):
+        if polissa['state'] in ('esborrany', 'validar'):
+            continue
     #for contract_id in contract_ids:
         #polissa = pol.get(contract_id)
         if 'modcon_id' in context:
             modcon = modcon_obj.get(context['modcon_id'])
-        else:
+        elif polissa['modcontractual_activa']:
             modcon = modcon_obj.read(polissa['modcontractual_activa'][0])
+        else:
+            print "Problema amb la polissa %s" % polissa['name']
+            continue
         PARTNERS.append(modcon['pagador'][0])
         PARTNERS.append(modcon['titular'][0])
         cups_fields = ['id_municipi', 'tv', 'nv', 'cpa', 'cpo', 'pnp', 'pt',
@@ -280,7 +283,6 @@ def contract_to_amon(contract_ids, context=None):
         cups = cups_obj.read(polissa['cups'][0], cups_fields)
         ine = muni_obj.read(cups['id_municipi'][0], ['ine'])['ine']
         contract = {
-            'companyId': 8449512768,
             'ownerId': make_uuid('res.partner', modcon['titular'][0]),
             'payerId': make_uuid('res.partner', modcon['pagador'][0]),
             'dateStart': make_utc_timestamp(modcon['data_inici']),
@@ -398,20 +400,26 @@ if __name__ == '__main__':
 
     O = OOOP(**ooop_config)
     from empowering import Empowering
-    em = Empowering(8449512768)
+    em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem', '/home/erp/src/conf/elgas.pem')
     if sys.argv[1] == 'push_amon_measures':
-        profiles_ids = O.TgProfile.search([])
-        popper = Popper(profiles_ids)
+        ini = 0
+        page = 1000000
         bucket = 500
-        pops = popper.pop(bucket)
-        while pops:
-            print "Queden %s items" % len(popper.items)
-            profiles = O.TgProfile.read(pops)
-            profiles_to_push = profile_to_amon(profiles)
-            #print profiles_to_push
-            measures = em.amon_measures().create(profiles_to_push)
-            print "%s measures creades" % len(measures)
+        profiles_ids = O.TgProfile.search([], ini, page)
+        while profiles_ids:
+            popper = Popper(profiles_ids)
             pops = popper.pop(bucket)
+            while pops:
+                print "Queden %s items" % len(popper.items)
+                profiles = O.TgProfile.read(pops)
+                profiles_to_push = profile_to_amon(profiles)
+                #print profiles_to_push
+                measures = em.amon_measures().create(profiles_to_push)
+                print "%s measures creades" % len(measures)
+                pops = popper.pop(bucket)
+            ini += page
+            profiles_ids = O.TgProfile.search([], ini, page)
+            print ini
     elif sys.argv[1] == 'push_contracts':
         cids = O.GiscedataLecturesComptador.search([('tg', '=', 1)])
         contracts_ids = [
