@@ -11,6 +11,8 @@ import json
 
 from libsaas.services import base
 from libsaas import http, parsers
+from libsaas.executors import urllib2_executor
+from .executors.urllib2_executor import HTTPSClientAuthHandler
 
 
 class EmpoweringResource(base.RESTResource):
@@ -74,12 +76,18 @@ class Empowering(base.Resource):
     """
     Empowering Insight Engine Service API.
     """
-    def __init__(self, company_id, version='v1'):
+    def __init__(self, company_id, key_file, cert_file, version='v1'):
         self.company_id = company_id
+        self.key_file = key_file
+        self.cert_file = cert_file
         endpoint = "https://api.empowering.cimne.com"
         self.apiroot = '%s/%s' % (endpoint, version)
         self.add_filter(self.use_json)
         self.add_filter(self.add_company_id)
+
+        # We have to use SSL Client
+        https_handler = HTTPSClientAuthHandler(self.key_file, self.cert_file)
+        urllib2_executor.use(https_handler)
 
     def use_json(self, request):
         if request.method.upper() not in http.URLENCODE_METHODS:
