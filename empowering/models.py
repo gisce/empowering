@@ -2,6 +2,7 @@ from marshmallow import Serializer, fields
 
 
 class CustomerAddress(Serializer):
+    buildingId = fields.UUID()
     city = fields.String()
     cityCode = fields.String()
     countryCode = fields.String()
@@ -9,9 +10,27 @@ class CustomerAddress(Serializer):
     postalCode = fields.String()
 
 
+class CustomerProfileEducationLevel(Serializer):
+    edu_prim = fields.Integer()
+    edu_sec = fields.Integer()
+    edu_uni = fields.Integer()
+    edu_noStudies = fields.Integer()
+
+
+class CustomerProfile(Serializer):
+    totalPersonNumber = fields.Integer()
+    minorsPersonsNumber = fields.Integer()
+    workingAgePersonsNumber = fields.Integer()
+    retiredAgePersonsNumber = fields.Integer()
+    malePersonsNumber = fields.Integer()
+    femalePersonsNumber = fields.Integer()
+    educationLevel = fields.Nested(CustomerProfileEducationLevel)
+
+
 class Customer(Serializer):
     customerId = fields.UUID()
     address = fields.Nested(CustomerAddress)
+    profile = fields.Nested(CustomerProfile)
 
 
 class Device(Serializer):
@@ -21,8 +40,9 @@ class Device(Serializer):
 
 
 class Contract(Serializer):
-    ownerId = fields.UUID()
     payerId = fields.UUID()
+    ownerId = fields.UUID()
+    signerId = fields.UUID()
     dateStart = fields.DateTime(format='iso')
     dateEnd = fields.DateTime(format='iso')
     contractId = fields.String()
