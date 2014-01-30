@@ -7,15 +7,19 @@ import sys
 import urllib
 import uuid
 import json
+import logging
 
 import times
 from ooop import OOOP
+from rq.decorators import job
 
 CUPS_CACHE = {}
 DEVICE_MP_REL = {}
 CUPS_UUIDS = {}
 PARTNERS = []
 UNITS = {'1': '', '1000': 'k'}
+
+logger = logging.getLogger('amon')
 
 class Popper(object):
     def __init__(self, items):
@@ -388,7 +392,8 @@ def partners_to_amon(partner_ids, context=None):
         res.append(remove_none(data, context))
     return res
 
-if __name__ == '__main__':
+
+def setup_ooop():
     ooop_config = {}
     for key, value in os.environ.items():
         if key.startswith('OOOP_'):
@@ -396,11 +401,46 @@ if __name__ == '__main__':
             if key == 'port':
                 value = int(value)
             ooop_config[key] = value
-    print "Using OOOP CONFIG: %s" % ooop_config
+    logger.info("Using OOOP CONFIG: %s" % ooop_config)
+    return OOOP(**ooop_config)
 
-    O = OOOP(**ooop_config)
+
+@job('measures')
+def push_amon_measures(measures_ids):
+    """Pugem les mesures a l'Insight Engine
+    """
     from empowering import Empowering
-    em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem', '/home/erp/src/conf/elgas.pem')
+    em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem',
+                    '/home/erp/src/conf/elgas.pem', debug=True)
+    O = setup_ooop()
+    profiles = O.TgProfile.read(measures_ids)
+    logger.info("Enviant de %s (id:%s) a %s (id:%s)" % (
+        profiles[0]['timestamp'], profiles[0]['id'],
+        profiles[-1]['timestamp'], profiles[-1]['id'],
+    ))
+    profiles_to_push = profile_to_amon(profiles)
+    measures = em.amon_measures().create(profiles_to_push)
+    logger.info("%s measures creades" % len(measures))
+
+
+@job('contracts')
+def push_contracts(contracts_id):
+    """Pugem els contractes
+    """
+    from empowering import Empowering
+    em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem',
+                    '/home/erp/src/conf/elgas.pem', debug=True)
+    O = setup_ooop()
+    contracts_to_push = contract_to_amon(contracts_id)
+    res = em.contracts().create(contracts_to_push)
+    for idx, resp in enumerate(res):
+        print idx, resp
+        pol_id = [contracts_ids[idx]]
+        O.GiscedataPolissa.write(pol_id, {'etag': resp['etag']})
+
+
+if __name__ == '__main__':
+    O = setup_ooop()
     if sys.argv[1] == 'push_amon_measures':
         ini = 0
         page = 1000000
@@ -410,16 +450,10 @@ if __name__ == '__main__':
             popper = Popper(profiles_ids)
             pops = popper.pop(bucket)
             while pops:
-                print "Queden %s items" % len(popper.items)
-                profiles = O.TgProfile.read(pops)
-                profiles_to_push = profile_to_amon(profiles)
-                #print profiles_to_push
-                measures = em.amon_measures().create(profiles_to_push)
-                print "%s measures creades" % len(measures)
+                push_amon_measures(pops)
                 pops = popper.pop(bucket)
             ini += page
             profiles_ids = O.TgProfile.search([], ini, page)
-            print ini
     elif sys.argv[1] == 'push_contracts':
         cids = O.GiscedataLecturesComptador.search([('tg', '=', 1)])
         contracts_ids = [
@@ -430,15 +464,5 @@ if __name__ == '__main__':
         bucket = 500
         pops = popper.pop(bucket)
         while pops:
-            print "Queden %s items" % len(popper.items)
-            contracts_to_push = contract_to_amon(pops)
-            res = em.contracts().create(contracts_to_push)
-            for idx, resp in enumerate(res):
-                print idx, resp
-                pol_id = [contracts_ids[idx]]
-                O.GiscedataPolissa.write(pol_id, {'etag': resp['etag']})
+            push_contracts(pops)
             pops = popper.pop(bucket)
-    elif sys.argv[1] == 'get_contracts':
-        print em.contracts().get()
-    elif sys.argv[1] == 'get_contract':
-        print em.contract(sys.argv[2]).get()
