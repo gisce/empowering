@@ -15,6 +15,17 @@ from libsaas.executors import urllib2_executor
 from .executors.urllib2_executor import HTTPSClientAuthHandler
 
 
+class EtagConcurrencyError(Exception):
+    pass
+
+
+def parse_eve(body, code, headers):
+    if code == 412:
+        raise EtagConcurrencyError
+    else:
+        return parsers.parse_json(body, code, headers)
+
+
 class EmpoweringResource(base.RESTResource):
 
     @base.apimethod
@@ -22,13 +33,13 @@ class EmpoweringResource(base.RESTResource):
         self.require_item()
         request = http.Request('PATCH', self.get_url(), self.wrap_object(obj),
                                headers={"If-Match": etag})
-        return request, parsers.parse_json
+        return request, parse_eve
 
     @base.apimethod
     def delete(self, etag):
         request = http.Request('DELETE', self.get_url(),
                                headers={"If-Match": etag})
-        return request, parsers.parse_json
+        return request, parse_eve
 
 
 class Contracts(EmpoweringResource):
