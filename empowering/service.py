@@ -12,7 +12,7 @@ import json
 from libsaas.services import base
 from libsaas import http, parsers
 from libsaas.executors import urllib2_executor
-from .executors.urllib2_executor import HTTPSClientAuthHandler
+from .executors.urllib2_executor import HTTPSClientAuthHandler, HTTPEmpoweringFilterHandler
 
 
 class EmpoweringResource(base.RESTResource):
@@ -28,6 +28,14 @@ class EmpoweringResource(base.RESTResource):
     def delete(self, etag):
         request = http.Request('DELETE', self.get_url(),
                                headers={"If-Match": etag})
+        return request, parsers.parse_json
+
+    @base.apimethod
+    def get(self, where=None, sort=None):
+        sort = sort.replace(' ', '')
+        params = base.get_params(('where', 'sort'), locals())
+        request = http.Request('GET', self.get_url(), params)
+
         return request, parsers.parse_json
 
 
@@ -72,6 +80,7 @@ class Measures(EmpoweringResource):
         request = http.Request('DELETE', self.get_url())
         return request, parsers.parse_json
 
+
 class Empowering(base.Resource):
     """
     Empowering Insight Engine Service API.
@@ -87,7 +96,8 @@ class Empowering(base.Resource):
 
         # We have to use SSL Client
         https_handler = HTTPSClientAuthHandler(self.key_file, self.cert_file)
-        urllib2_executor.use(https_handler)
+        filter_handler = HTTPEmpoweringFilterHandler()
+        urllib2_executor.use(extra_handlers=(https_handler, filter_handler))
 
     def use_json(self, request):
         if request.method.upper() not in http.URLENCODE_METHODS:
