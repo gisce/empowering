@@ -29,7 +29,9 @@ def main(path):
                     'orig': request.json}
         print "======>"
         print "%s" % res
-        return json.dumps(res)
+    else:
+        res = {}
+    return json.dumps(res)
 
 if __name__ == '__main__':
     app.run(debug=True)
