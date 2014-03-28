@@ -1,7 +1,11 @@
 import urllib2
 import httplib
+import logging
 from urlparse import urlparse, urlunparse
 from libsaas.executors.urllib2_executor import RequestWithMethod
+
+
+logger = logging.getLogger('empowering.executors.urllib2_executor')
 
 
 class HTTPSClientAuthHandler(urllib2.HTTPSHandler):
@@ -38,6 +42,7 @@ class HTTPEmpoweringFilterHandler(urllib2.BaseHandler):
                 urllib2.unquote(url.query),
                 url.fragment
             ))
+            logger.debug("New url set to %s" % newurl)
             newr = RequestWithMethod(newurl, request.data, request.headers,
                                     request.origin_req_host,
                                     request.unverifiable)
