@@ -14,6 +14,8 @@ from libsaas import http, parsers
 from libsaas.executors import urllib2_executor
 from .executors.urllib2_executor import HTTPSClientAuthHandler, HTTPEmpoweringFilterHandler
 
+from empowering.results import *
+
 
 class EmpoweringResource(base.RESTResource):
 
@@ -81,10 +83,6 @@ class Measures(EmpoweringResource):
         return request, parsers.parse_json
 
 
-class OT101Results(EmpoweringResource):
-    path = 'OT101Results'
-
-
 class Empowering(base.Resource):
     """
     Empowering Insight Engine Service API.
@@ -137,3 +135,43 @@ class Empowering(base.Resource):
     @base.resource(OT101Results)
     def ot101_results(self):
         return OT101Results(self)
+
+    @base.resource(OT103Results)
+    def ot103_result(self, result_id):
+        return OT103Results(self, result_id)
+
+    @base.resource(OT103Results)
+    def ot103_results(self):
+        return OT103Results(self)
+
+    @base.resource(OT106Results)
+    def ot106_result(self, result_id):
+        return OT106Results(self, result_id)
+
+    @base.resource(OT106Results)
+    def ot106_results(self):
+        return OT106Results(self)
+
+    @base.resource(OT201Results)
+    def ot201_result(self, result_id):
+        return OT201Results(self, result_id)
+
+    @base.resource(OT201Results)
+    def ot201_results(self):
+        return OT201Results(self)
+
+    @base.resource(OT204Results)
+    def ot204_result(self, result_id):
+        return OT204Results(self, result_id)
+
+    @base.resource(OT204Results)
+    def ot204_results(self):
+        return OT204Results(self)
+
+    @base.resource(BT111Results)
+    def bt111_result(self, result_id):
+        return BT111Results(self, result_id)
+
+    @base.resource(BT111Results)
+    def bt111_results(self):
+        return BT111Results(self)
