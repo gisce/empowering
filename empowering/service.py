@@ -32,7 +32,7 @@ class EmpoweringResource(base.RESTResource):
 
     @base.apimethod
     def get(self, where=None, sort=None):
-        sort = sort.replace(' ', '')
+        sort = sort and sort.replace(' ', '')
         params = base.get_params(('where', 'sort'), locals())
         request = http.Request('GET', self.get_url(), params)
 
