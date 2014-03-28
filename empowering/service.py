@@ -81,6 +81,10 @@ class Measures(EmpoweringResource):
         return request, parsers.parse_json
 
 
+class OT101Results(EmpoweringResource):
+    path = 'OT101Results'
+
+
 class Empowering(base.Resource):
     """
     Empowering Insight Engine Service API.
@@ -125,3 +129,11 @@ class Empowering(base.Resource):
     @base.resource(Contracts)
     def contracts(self):
         return Contracts(self)
+
+    @base.resource(OT101Results)
+    def ot101_result(self, result_id):
+        return OT101Results(self, result_id)
+
+    @base.resource(OT101Results)
+    def ot101_results(self):
+        return OT101Results(self)
