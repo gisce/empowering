@@ -49,4 +49,6 @@ class HTTPEmpoweringFilterHandler(urllib2.BaseHandler):
             newr.timeout = request.timeout
             newr.set_method(request.get_method())
             return newr
+        else:
+            return request
     https_request = http_request
