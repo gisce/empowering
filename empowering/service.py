@@ -12,31 +12,11 @@ import json
 from libsaas.services import base
 from libsaas import http, parsers
 from libsaas.executors import urllib2_executor
-from .executors.urllib2_executor import HTTPSClientAuthHandler, HTTPEmpoweringFilterHandler
-
-
-class EmpoweringResource(base.RESTResource):
-
-    @base.apimethod
-    def update(self, obj, etag):
-        self.require_item()
-        request = http.Request('PATCH', self.get_url(), self.wrap_object(obj),
-                               headers={"If-Match": etag})
-        return request, parsers.parse_json
-
-    @base.apimethod
-    def delete(self, etag):
-        request = http.Request('DELETE', self.get_url(),
-                               headers={"If-Match": etag})
-        return request, parsers.parse_json
-
-    @base.apimethod
-    def get(self, where=None, sort=None):
-        sort = sort and sort.replace(' ', '')
-        params = base.get_params(('where', 'sort'), locals())
-        request = http.Request('GET', self.get_url(), params)
-
-        return request, parsers.parse_json
+from empowering.executors.urllib2_executor import (
+    HTTPSClientAuthHandler, HTTPEmpoweringFilterHandler
+)
+from empowering.resource import EmpoweringResource
+from empowering.results import *
 
 
 class Contracts(EmpoweringResource):
@@ -125,3 +105,51 @@ class Empowering(base.Resource):
     @base.resource(Contracts)
     def contracts(self):
         return Contracts(self)
+
+    @base.resource(OT101Results)
+    def ot101_result(self, result_id):
+        return OT101Results(self, result_id)
+
+    @base.resource(OT101Results)
+    def ot101_results(self):
+        return OT101Results(self)
+
+    @base.resource(OT103Results)
+    def ot103_result(self, result_id):
+        return OT103Results(self, result_id)
+
+    @base.resource(OT103Results)
+    def ot103_results(self):
+        return OT103Results(self)
+
+    @base.resource(OT106Results)
+    def ot106_result(self, result_id):
+        return OT106Results(self, result_id)
+
+    @base.resource(OT106Results)
+    def ot106_results(self):
+        return OT106Results(self)
+
+    @base.resource(OT201Results)
+    def ot201_result(self, result_id):
+        return OT201Results(self, result_id)
+
+    @base.resource(OT201Results)
+    def ot201_results(self):
+        return OT201Results(self)
+
+    @base.resource(OT204Results)
+    def ot204_result(self, result_id):
+        return OT204Results(self, result_id)
+
+    @base.resource(OT204Results)
+    def ot204_results(self):
+        return OT204Results(self)
+
+    @base.resource(BT111Results)
+    def bt111_result(self, result_id):
+        return BT111Results(self, result_id)
+
+    @base.resource(BT111Results)
+    def bt111_results(self):
+        return BT111Results(self)
