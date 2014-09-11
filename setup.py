@@ -28,7 +28,7 @@ setup(
     description='Python library for the Empowering REST API.',
     long_description=__doc__,
     license='MIT',
-    packages=find_packages(exclude=['tests', 'test']),
+    packages=find_packages(),
     zip_safe=False,
     install_requires=install_requires,
     tests_require=tests_require,
