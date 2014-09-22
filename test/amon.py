@@ -176,29 +176,30 @@ def profile_to_amon(profiles):
             "readings": [
                 {
                     "type":  "electricityConsumption",
-                    "unit": "%sWh" % UNITS[profile['magn']],
-                    "period": "INSTANT",
+                    "unit": "%sWh" % UNITS[profile.get('magn', 1)],
+                    "period": "CUMULATIVE",
                 },
                 {
                     "type": "electricityKiloVoltAmpHours",
-                    "unit": "%sVArh" % UNITS[profile['magn']],
-                    "period": "INSTANT",
+                    "unit": "%sVArh" % UNITS[profile.geT('magn', 1)],
+                    "period": "CUMULATIVE",
                 }
             ],
             "measurements": [
                 {
                     "type": "electricityConsumption",
-                    "timestamp": make_utc_timestamp(profile['timestamp']),
+                    "timestamp": make_utc_timestamp(profile['date_end']),
                     "value": float(profile['ai'])
                 },
                 {
                     "type": "electricityKiloVoltAmpHours",
-                    "timestamp": make_utc_timestamp(profile['timestamp']),
+                    "timestamp": make_utc_timestamp(profile['date_end']),
                     "value": float(profile['r1'])
                 }
         ]
         })
     return res
+
 
 def device_to_amon(device_ids):
     """Convert a device to AMON.
