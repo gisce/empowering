@@ -3,19 +3,34 @@
 
 from datetime import datetime
 import os
-import sys
 import urllib
 import uuid
 import json
+import logging
+import pymongo
 
 import times
+import erppeek
 from ooop import OOOP
+from rq.decorators import job
+from redis import Redis
+from modeldict import RedisDict
 
-CUPS_CACHE = {}
-DEVICE_MP_REL = {}
-CUPS_UUIDS = {}
+redis_con = Redis()
+
+CUPS_CACHE = RedisDict('CUPS_CACHE', redis_con)
+DEVICE_MP_REL = RedisDict('DEVICE_MP_REL', redis_con)
+CUPS_UUIDS = RedisDict('CUPS_UUIDS', redis_con)
 PARTNERS = []
-UNITS = {'1': '', '1000': 'k'}
+UNITS = {1: '', 1000: 'k'}
+mongodb_host = '192.168.2.196'
+mongodb_db = 'mongodb_distri'
+
+logger = logging.getLogger('amon')
+hdlr = logging.FileHandler('/tmp/amon.log')
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr) 
 
 class Popper(object):
     def __init__(self, items):
@@ -44,7 +59,7 @@ def remove_none(struct, context=None):
 
 
 def make_uuid(model, model_id):
-    token = '%s,%s' % (model, model_id)
+    token = str('%s,%s' % (model, model_id))
     return str(uuid.uuid5(uuid.NAMESPACE_OID, token))
 
 
@@ -161,29 +176,30 @@ def profile_to_amon(profiles):
             "readings": [
                 {
                     "type":  "electricityConsumption",
-                    "unit": "%sWh" % UNITS[profile['magn']],
-                    "period": "INSTANT",
+                    "unit": "%sWh" % UNITS[profile.get('magn', 1)],
+                    "period": "CUMULATIVE",
                 },
                 {
                     "type": "electricityKiloVoltAmpHours",
-                    "unit": "%sVArh" % UNITS[profile['magn']],
-                    "period": "INSTANT",
+                    "unit": "%sVArh" % UNITS[profile.geT('magn', 1)],
+                    "period": "CUMULATIVE",
                 }
             ],
             "measurements": [
                 {
                     "type": "electricityConsumption",
-                    "timestamp": make_utc_timestamp(profile['timestamp']),
+                    "timestamp": make_utc_timestamp(profile['date_end']),
                     "value": float(profile['ai'])
                 },
                 {
                     "type": "electricityKiloVoltAmpHours",
-                    "timestamp": make_utc_timestamp(profile['timestamp']),
+                    "timestamp": make_utc_timestamp(profile['date_end']),
                     "value": float(profile['r1'])
                 }
         ]
         })
     return res
+
 
 def device_to_amon(device_ids):
     """Convert a device to AMON.
@@ -267,17 +283,13 @@ def contract_to_amon(contract_ids, context=None):
     for polissa in pol.read(contract_ids, fields_to_read):
         if polissa['state'] in ('esborrany', 'validar'):
             continue
-    #for contract_id in contract_ids:
-        #polissa = pol.get(contract_id)
         if 'modcon_id' in context:
-            modcon = modcon_obj.get(context['modcon_id'])
+            modcon = modcon_obj.read(context['modcon_id'])
         elif polissa['modcontractual_activa']:
             modcon = modcon_obj.read(polissa['modcontractual_activa'][0])
         else:
             print "Problema amb la polissa %s" % polissa['name']
             continue
-        PARTNERS.append(modcon['pagador'][0])
-        PARTNERS.append(modcon['titular'][0])
         cups_fields = ['id_municipi', 'tv', 'nv', 'cpa', 'cpo', 'pnp', 'pt',
                        'es', 'pu', 'dp']
         cups = cups_obj.read(polissa['cups'][0], cups_fields)
@@ -388,7 +400,18 @@ def partners_to_amon(partner_ids, context=None):
         res.append(remove_none(data, context))
     return res
 
-if __name__ == '__main__':
+
+def setup_peek():
+    peek_config = {}
+    for key, value in os.environ.items():
+        if key.startswith('PEEK_'):
+            key = key.split('_')[1].lower()
+            peek_config[key] = value
+    logger.info("Using PEEK CONFIG: %s" % peek_config)
+    return erppeek.Client(**peek_config)
+
+
+def setup_ooop():
     ooop_config = {}
     for key, value in os.environ.items():
         if key.startswith('OOOP_'):
@@ -396,49 +419,75 @@ if __name__ == '__main__':
             if key == 'port':
                 value = int(value)
             ooop_config[key] = value
-    print "Using OOOP CONFIG: %s" % ooop_config
+    logger.info("Using OOOP CONFIG: %s" % ooop_config)
+    return OOOP(**ooop_config)
 
-    O = OOOP(**ooop_config)
+
+@job('measures', connection=Redis())
+def push_amon_measures(measures_ids):
+    """Pugem les mesures a l'Insight Engine
+    """
     from empowering import Empowering
-    em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem', '/home/erp/src/conf/elgas.pem')
-    if sys.argv[1] == 'push_amon_measures':
-        ini = 0
-        page = 1000000
-        bucket = 500
-        profiles_ids = O.TgProfile.search([], ini, page)
-        while profiles_ids:
-            popper = Popper(profiles_ids)
-            pops = popper.pop(bucket)
-            while pops:
-                print "Queden %s items" % len(popper.items)
-                profiles = O.TgProfile.read(pops)
-                profiles_to_push = profile_to_amon(profiles)
-                #print profiles_to_push
-                measures = em.amon_measures().create(profiles_to_push)
-                print "%s measures creades" % len(measures)
-                pops = popper.pop(bucket)
-            ini += page
-            profiles_ids = O.TgProfile.search([], ini, page)
-            print ini
-    elif sys.argv[1] == 'push_contracts':
-        cids = O.GiscedataLecturesComptador.search([('tg', '=', 1)])
-        contracts_ids = [
-            x['polissa'][0]
-            for x in O.GiscedataLecturesComptador.read(cids, ['polissa'])
-        ]
-        popper = Popper(contracts_ids)
-        bucket = 500
-        pops = popper.pop(bucket)
-        while pops:
-            print "Queden %s items" % len(popper.items)
-            contracts_to_push = contract_to_amon(pops)
-            res = em.contracts().create(contracts_to_push)
-            for idx, resp in enumerate(res):
-                print idx, resp
-                pol_id = [contracts_ids[idx]]
-                O.GiscedataPolissa.write(pol_id, {'etag': resp['etag']})
-            pops = popper.pop(bucket)
-    elif sys.argv[1] == 'get_contracts':
-        print em.contracts().get()
-    elif sys.argv[1] == 'get_contract':
-        print em.contract(sys.argv[2]).get()
+    em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem',
+                    '/home/erp/src/conf/elgas.pem')
+    O = setup_peek()
+    global O
+    start = datetime.now()
+    mongo = pymongo.MongoClient(host=mongodb_host)
+    collection = mongo[mongodb_db]['tg_billing']
+    mdbprofiles = collection.find({'id': {'$in': measures_ids}},
+                                  {'name': 1, 'id': 1, '_id': 0,
+                                  'ai': 1, 'r1': 1, 'date_end': 1},
+                                  sort=[('date_end', pymongo.ASCENDING)])
+    profiles = [x for x in mdbprofiles]
+    #profiles = O.TgProfile.read(measures_ids)
+    logger.info("Enviant de %s (id:%s) a %s (id:%s)" % (
+        profiles[-1]['date_end'], profiles[-1]['id'],
+        profiles[0]['date_end'], profiles[0]['id'],
+    ))
+    profiles_to_push = profile_to_amon(profiles)
+    stop = datetime.now()
+    logger.info('Mesures transformades en %s' % (stop - start))
+    start = datetime.now()
+    measures = em.amon_measures().create(profiles_to_push)
+    stop = datetime.now()
+    logger.info('Mesures enviades en %s' % (stop - start))
+    logger.info("%s measures creades" % len(measures))
+    mongo.disconnect()
+
+
+@job('contracts', connection=Redis())
+def push_contracts(contracts_id):
+    """Pugem els contractes
+    """
+    from empowering import Empowering
+    em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem',
+                    '/home/erp/src/conf/elgas.pem')
+    O = setup_peek()
+    global O
+    res = []
+    if not isinstance(contracts_id, (list, tuple)):
+        contracts_id = [contracts_id]
+    for cid in contracts_id:
+        pol = O.GiscedataPolissa.read(cid, ['modcontractuals_ids', 'name'])
+        first = True
+        for modcon_id in reversed(pol['modcontractuals_ids']):
+            amon_data = contract_to_amon(cid, {'modcon_id': modcon_id})
+            if first:
+                res += em.contracts().create(amon_data)
+                first = False
+            else:
+                res.append(em.contract(pol['name']).update(amon_data[0]))
+        for idx, resp in enumerate(res):
+            pol_id = [contracts_id[idx]]
+            update_etag.delay(pol_id, resp)
+
+
+@job('etag', connection=Redis())
+def update_etag(pol_id, resp):
+    """Actualitzem l'etag.
+    """
+    O = setup_peek()
+    etag = resp['etag']
+    logger.info("Polissa id: %s -> etag %s" % (pol_id, etag))
+    O.GiscedataPolissa.write(pol_id, {'etag': etag})
