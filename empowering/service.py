@@ -8,6 +8,7 @@ empowering.service
 
 
 import json
+from warnings import warn
 
 from libsaas.services import base
 from libsaas import http, parsers
@@ -39,8 +40,8 @@ class AmonMeasures(EmpoweringResource):
         raise base.MethodNotSupported
 
 
-class Measures(EmpoweringResource):
-    path = 'measures'
+class AmonMeasuresMeasurements(EmpoweringResource):
+    path = 'amon_measures_measurements'
 
     @base.apimethod
     def get(self):
@@ -59,6 +60,13 @@ class Measures(EmpoweringResource):
         params = base.get_params(('start', 'end'), locals())
         request = http.Request('DELETE', self.get_url())
         return request, parsers.parse_json
+
+
+class Measures(AmonMeasuresMeasurements):
+    def __init__(self, *args, **kwargs):
+        super(AmonMeasuresMeasurements, self).__init__(*args, **kwargs)
+        warn('Deprecated class. Use AmonMeasuresMeasurements',
+             DeprecationWarning)
 
 
 class Empowering(base.Resource):
@@ -96,7 +104,12 @@ class Empowering(base.Resource):
 
     @base.resource(Measures)
     def measures(self):
+        warn('Deprecated. Use amon_measures_measurements', DeprecationWarning)
         return Measures(self)
+
+    @base.resource(AmonMeasuresMeasurements)
+    def amon_measures_measurements(self):
+        return AmonMeasuresMeasurements(self)
 
     @base.resource(Contracts)
     def contract(self, contract_id):
