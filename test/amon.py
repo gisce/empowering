@@ -3,7 +3,6 @@
 
 from datetime import datetime
 import os
-import sys
 import urllib
 import uuid
 import json
@@ -12,6 +11,7 @@ import pymongo
 
 import times
 import erppeek
+from ooop import OOOP
 from rq.decorators import job
 from redis import Redis
 from modeldict import RedisDict
@@ -282,10 +282,8 @@ def contract_to_amon(contract_ids, context=None):
     for polissa in pol.read(contract_ids, fields_to_read):
         if polissa['state'] in ('esborrany', 'validar'):
             continue
-    #for contract_id in contract_ids:
-        #polissa = pol.get(contract_id)
         if 'modcon_id' in context:
-            modcon = modcon_obj.get(context['modcon_id'])
+            modcon = modcon_obj.read(context['modcon_id'])
         elif polissa['modcontractual_activa']:
             modcon = modcon_obj.read(polissa['modcontractual_activa'][0])
         else:
@@ -412,6 +410,18 @@ def setup_peek():
     return erppeek.Client(**peek_config)
 
 
+def setup_ooop():
+    ooop_config = {}
+    for key, value in os.environ.items():
+        if key.startswith('OOOP_'):
+            key = key.split('_')[1].lower()
+            if key == 'port':
+                value = int(value)
+            ooop_config[key] = value
+    logger.info("Using OOOP CONFIG: %s" % ooop_config)
+    return OOOP(**ooop_config)
+
+
 @job('measures', connection=Redis())
 def push_amon_measures(measures_ids):
     """Pugem les mesures a l'Insight Engine
@@ -423,17 +433,16 @@ def push_amon_measures(measures_ids):
     global O
     start = datetime.now()
     mongo = pymongo.MongoClient(host=mongodb_host)
-    collection = mongo[mongodb_db]['tg_profile']
+    collection = mongo[mongodb_db]['tg_billing']
     mdbprofiles = collection.find({'id': {'$in': measures_ids}},
                                   {'name': 1, 'id': 1, '_id': 0,
-                                  'ai': 1, 'r1': 1, 'magn': 1,
-                                  'timestamp': 1},
-                                  sort=[('timestamp', pymongo.DESCENDING)])
+                                  'ai': 1, 'r1': 1, 'date_end': 1},
+                                  sort=[('date_end', pymongo.ASCENDING)])
     profiles = [x for x in mdbprofiles]
     #profiles = O.TgProfile.read(measures_ids)
     logger.info("Enviant de %s (id:%s) a %s (id:%s)" % (
-        profiles[-1]['timestamp'], profiles[-1]['id'],
-        profiles[0]['timestamp'], profiles[0]['id'],
+        profiles[-1]['date_end'], profiles[-1]['id'],
+        profiles[0]['date_end'], profiles[0]['id'],
     ))
     profiles_to_push = profile_to_amon(profiles)
     stop = datetime.now()
@@ -455,12 +464,22 @@ def push_contracts(contracts_id):
                     '/home/erp/src/conf/elgas.pem')
     O = setup_peek()
     global O
-    contracts_to_push = contract_to_amon(contracts_id)
-    res = em.contracts().create(contracts_to_push)
-    logger.info("S'han creat %s polisses" % len(res))
-    for idx, resp in enumerate(res):
-        pol_id = [contracts_id[idx]]
-        update_etag.delay(pol_id, resp)
+    res = []
+    if not isinstance(contracts_id, (list, tuple)):
+        contracts_id = [contracts_id]
+    for cid in contracts_id:
+        pol = O.GiscedataPolissa.read(cid, ['modcontractuals_ids', 'name'])
+        first = True
+        for modcon_id in reversed(pol['modcontractuals_ids']):
+            amon_data = contract_to_amon(cid, {'modcon_id': modcon_id})
+            if first:
+                res += em.contracts().create(amon_data)
+                first = False
+            else:
+                res.append(em.contract(pol['name']).update(amon_data[0]))
+        for idx, resp in enumerate(res):
+            pol_id = [contracts_id[idx]]
+            update_etag.delay(pol_id, resp)
 
 
 @job('etag', connection=Redis())

@@ -3,23 +3,10 @@
 import logging
 logger = logging.getLogger(__name__)
 from amon import push_amon_measures, push_contracts, setup_peek, Popper
-import os
 import sys
 import time
-from ooop import OOOP
 
 logging.basicConfig(level=logging.INFO)
-
-def setup_ooop():
-    ooop_config = {}
-    for key, value in os.environ.items():
-        if key.startswith('OOOP_'):
-            key = key.split('_')[1].lower()
-            if key == 'port':
-                value = int(value)
-            ooop_config[key] = value
-    logger.info("Using OOOP CONFIG: %s" % ooop_config)
-    return OOOP(**ooop_config)
 
 
 if __name__ == '__main__':
@@ -29,13 +16,17 @@ if __name__ == '__main__':
         for serial in serials:
             ini = 0
             page = 500
-	    meter_name = serial.replace('\n', '').strip()
+            meter_name = serial.replace('\n', '').strip()
             if not meter_name.startswith('ZIV00'):
                 continue
-            search_params = [('name', '=', meter_name),
-                             ('valid', '=', True),
-                             ('timestamp', '>=', '2012-05-01'),
-			    ]
+            search_params = [
+                ('name', '=', meter_name),
+                ('type', '=', 'day'),
+                ('value', '=', 'a'),
+                ('valid', '=', True),
+                ('period', '=', 0)
+                #('timestamp', '>=', '2012-05-01'),
+            ]
             profiles_ids = O.TgProfile.search(search_params, ini, page)
             while profiles_ids:
                 j = push_amon_measures.delay(profiles_ids)
