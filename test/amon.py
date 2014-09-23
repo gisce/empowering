@@ -37,7 +37,7 @@ logger.addHandler(hdlr)
 
 class Popper(object):
     def __init__(self, items):
-        self.items = items[:]
+        self.items = list(items)
 
     def pop(self, n):
         res = []
