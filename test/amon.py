@@ -13,6 +13,7 @@ import times
 import erppeek
 from ooop import OOOP
 from rq.decorators import job
+from rq import Queue
 from redis import Redis
 from modeldict import RedisDict
 from raven import Client
@@ -503,7 +504,8 @@ def push_contracts(contracts_id):
                 pol_id = [contracts_id[idx]]
                 update_etag.delay(pol_id, resp)
         except:
-            push_contracts.delay(cid)
+            q = Queue('contracts_to_check', connection=Redis())
+            q.enqueue(push_contracts, cid)
 
 
 @job('etag', connection=Redis())
