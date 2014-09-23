@@ -478,14 +478,17 @@ def push_contracts(contracts_id):
         contracts_id = [contracts_id]
     for cid in contracts_id:
         pol = O.GiscedataPolissa.read(cid, ['modcontractuals_ids', 'name'])
+        upd = []
         first = True
         for modcon_id in reversed(pol['modcontractuals_ids']):
             amon_data = amon.contract_to_amon(cid, {'modcon_id': modcon_id})
             if first:
-                res += em.contracts().create(amon_data)
+                upd.append(em.contracts().create(amon_data))
                 first = False
             else:
-                res.append(em.contract(pol['name']).update(amon_data[0]))
+                etag = upd[-1]['etag']
+                upd.append(em.contract(pol['name']).update(amon_data[0]), etag)
+        res.append(upd[-1])
         for idx, resp in enumerate(res):
             pol_id = [contracts_id[idx]]
             update_etag.delay(pol_id, resp)
