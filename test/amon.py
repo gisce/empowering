@@ -503,7 +503,7 @@ def push_contracts(contracts_id):
                 pol_id = [contracts_id[idx]]
                 update_etag.delay(pol_id, resp)
         except:
-            push_contracts(cid)
+            push_contracts.delay(cid)
 
 
 @job('etag', connection=Redis())
