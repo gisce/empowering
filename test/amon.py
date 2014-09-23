@@ -444,8 +444,10 @@ def push_amon_measures(measures_ids):
     """
     try:
         from empowering import Empowering
-        em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem',
-                        '/home/erp/src/conf/elgas.pem')
+        #em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem',
+        #                '/home/erp/src/conf/elgas.pem')
+        em = Empowering('8449512768')
+        em.apiroot = 'http://91.121.140.152:5111/v1'
         O = setup_peek()
         amon = AmonConverter(O)
         start = datetime.now()
@@ -482,8 +484,10 @@ def push_contracts(contracts_id):
     """
     try:
         from empowering import Empowering
-        em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem',
-                        '/home/erp/src/conf/elgas.pem')
+        #em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem',
+        #                '/home/erp/src/conf/elgas.pem')
+        em = Empowering('8449512768')
+        em.apiroot = 'http://91.121.140.152:5111/v1'
         O = setup_peek()
         amon = AmonConverter(O)
         res = []
