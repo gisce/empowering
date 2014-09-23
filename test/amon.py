@@ -487,23 +487,20 @@ def push_contracts(contracts_id):
     if not isinstance(contracts_id, (list, tuple)):
         contracts_id = [contracts_id]
     for cid in contracts_id:
-        try:
-            pol = O.GiscedataPolissa.read(cid, ['modcontractuals_ids', 'name'])
-            upd = []
-            first = True
-            for modcon_id in reversed(pol['modcontractuals_ids']):
-                amon_data = amon.contract_to_amon(cid, {'modcon_id': modcon_id})[0]
-                if first:
-                    upd.append(em.contracts().create(amon_data))
-                    first = False
-                else:
-                    etag = upd[-1]['_etag']
-                    upd.append(em.contract(pol['name']).update(amon_data, etag))
+        pol = O.GiscedataPolissa.read(cid, ['modcontractuals_ids', 'name'])
+        upd = []
+        first = True
+        for modcon_id in reversed(pol['modcontractuals_ids']):
+            amon_data = amon.contract_to_amon(cid, {'modcon_id': modcon_id})[0]
+            if first:
+                upd.append(em.contracts().create(amon_data))
+                first = False
+            else:
+                etag = upd[-1]['_etag']
+                upd.append(em.contract(pol['name']).update(amon_data, etag))
+        if upd:
             res.append(upd[-1])
             update_etag.delay(cid, upd[-1])
-        except:
-            q = Queue('contracts_to_check', connection=Redis())
-            q.enqueue(push_contracts, cid)
 
 
 @job('etag', connection=Redis())

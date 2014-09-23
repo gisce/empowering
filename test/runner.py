@@ -43,7 +43,7 @@ if __name__ == '__main__':
         ]
         contracts_ids = set(contracts_ids)
         popper = Popper(contracts_ids)
-        bucket = 500
+        bucket = 1
         pops = popper.pop(bucket)
         while pops:
             j = push_contracts.delay(pops)
