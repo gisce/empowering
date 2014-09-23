@@ -73,7 +73,7 @@ class Empowering(base.Resource):
     """
     Empowering Insight Engine Service API.
     """
-    def __init__(self, company_id, key_file, cert_file, version='v1'):
+    def __init__(self, company_id, key_file=None, cert_file=None, version='v1'):
         self.company_id = company_id
         self.key_file = key_file
         self.cert_file = cert_file
