@@ -15,13 +15,9 @@ from ooop import OOOP
 from rq.decorators import job
 from redis import Redis
 from modeldict import RedisDict
+from raven import Client
 
-try:
-    from raven import Client
-    sentry = Client()
-except:
-    sentry = None
-
+sentry = Client()
 redis_con = Redis()
 
 CUPS_CACHE = RedisDict('CUPS_CACHE', redis_con)
@@ -439,92 +435,81 @@ def setup_ooop():
 
 
 @job('measures', connection=Redis())
+@sentry.capture_exceptions
 def push_amon_measures(measures_ids):
     """Pugem les mesures a l'Insight Engine
     """
-    try:
-        from empowering import Empowering
-        #em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem',
-        #                '/home/erp/src/conf/elgas.pem')
-        em = Empowering('8449512768')
-        em.apiroot = 'http://91.121.140.152:5111/v1'
-        O = setup_peek()
-        amon = AmonConverter(O)
-        start = datetime.now()
-        mongo = pymongo.MongoClient(host=mongodb_host)
-        collection = mongo[mongodb_db]['tg_billing']
-        mdbprofiles = collection.find({'id': {'$in': measures_ids}},
-                                      {'name': 1, 'id': 1, '_id': 0,
-                                      'ai': 1, 'r1': 1, 'date_end': 1},
-                                      sort=[('date_end', pymongo.ASCENDING)])
-        profiles = [x for x in mdbprofiles]
-        #profiles = O.TgProfile.read(measures_ids)
-        logger.info("Enviant de %s (id:%s) a %s (id:%s)" % (
-            profiles[-1]['date_end'], profiles[-1]['id'],
-            profiles[0]['date_end'], profiles[0]['id'],
-        ))
-        profiles_to_push = amon.profile_to_amon(profiles)
-        stop = datetime.now()
-        logger.info('Mesures transformades en %s' % (stop - start))
-        start = datetime.now()
-        measures = em.amon_measures().create(profiles_to_push)
-        stop = datetime.now()
-        logger.info('Mesures enviades en %s' % (stop - start))
-        logger.info("%s measures creades" % len(measures))
-        mongo.disconnect()
-    except:
-        if sentry:
-            sentry.captureException()
-            raise
+    from empowering import Empowering
+    #em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem',
+    #                '/home/erp/src/conf/elgas.pem')
+    em = Empowering('8449512768')
+    em.apiroot = 'http://91.121.140.152:5111/v1'
+    O = setup_peek()
+    amon = AmonConverter(O)
+    start = datetime.now()
+    mongo = pymongo.MongoClient(host=mongodb_host)
+    collection = mongo[mongodb_db]['tg_billing']
+    mdbprofiles = collection.find({'id': {'$in': measures_ids}},
+                                  {'name': 1, 'id': 1, '_id': 0,
+                                  'ai': 1, 'r1': 1, 'date_end': 1},
+                                  sort=[('date_end', pymongo.ASCENDING)])
+    profiles = [x for x in mdbprofiles]
+    #profiles = O.TgProfile.read(measures_ids)
+    logger.info("Enviant de %s (id:%s) a %s (id:%s)" % (
+        profiles[-1]['date_end'], profiles[-1]['id'],
+        profiles[0]['date_end'], profiles[0]['id'],
+    ))
+    profiles_to_push = amon.profile_to_amon(profiles)
+    stop = datetime.now()
+    logger.info('Mesures transformades en %s' % (stop - start))
+    start = datetime.now()
+    measures = em.amon_measures().create(profiles_to_push)
+    stop = datetime.now()
+    logger.info('Mesures enviades en %s' % (stop - start))
+    logger.info("%s measures creades" % len(measures))
+    mongo.disconnect()
 
 
 @job('contracts', connection=Redis())
+@sentry.capture_exceptions
 def push_contracts(contracts_id):
     """Pugem els contractes
     """
-    try:
-        from empowering import Empowering
-        #em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem',
-        #                '/home/erp/src/conf/elgas.pem')
-        em = Empowering('8449512768')
-        em.apiroot = 'http://91.121.140.152:5111/v1'
-        O = setup_peek()
-        amon = AmonConverter(O)
-        res = []
-        if not isinstance(contracts_id, (list, tuple)):
-            contracts_id = [contracts_id]
-        for cid in contracts_id:
-            pol = O.GiscedataPolissa.read(cid, ['modcontractuals_ids', 'name'])
-            upd = []
-            first = True
-            for modcon_id in reversed(pol['modcontractuals_ids']):
-                amon_data = amon.contract_to_amon(cid, {'modcon_id': modcon_id})[0]
-                if first:
-                    upd.append(em.contracts().create(amon_data))
-                    first = False
-                else:
-                    etag = upd[-1]['_etag']
-                    upd.append(em.contract(pol['name']).update(amon_data, etag))
-            res.append(upd[-1])
-            for idx, resp in enumerate(res):
-                pol_id = [contracts_id[idx]]
-                update_etag.delay(pol_id, resp)
-    except:
-        if sentry:
-            sentry.captureException()
-            raise
+    from empowering import Empowering
+    #em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem',
+    #                '/home/erp/src/conf/elgas.pem')
+    em = Empowering('8449512768')
+    em.apiroot = 'http://91.121.140.152:5111/v1'
+    O = setup_peek()
+    amon = AmonConverter(O)
+    res = []
+    if not isinstance(contracts_id, (list, tuple)):
+        contracts_id = [contracts_id]
+    for cid in contracts_id:
+        pol = O.GiscedataPolissa.read(cid, ['modcontractuals_ids', 'name'])
+        upd = []
+        first = True
+        for modcon_id in reversed(pol['modcontractuals_ids']):
+            amon_data = amon.contract_to_amon(cid, {'modcon_id': modcon_id})[0]
+            if first:
+                upd.append(em.contracts().create(amon_data))
+                first = False
+            else:
+                etag = upd[-1]['_etag']
+                upd.append(em.contract(pol['name']).update(amon_data, etag))
+        res.append(upd[-1])
+        for idx, resp in enumerate(res):
+            pol_id = [contracts_id[idx]]
+            update_etag.delay(pol_id, resp)
 
 
 @job('etag', connection=Redis())
+@sentry.capture_exceptions
 def update_etag(pol_id, resp):
     """Actualitzem l'etag.
     """
-    try:
-        O = setup_peek()
-        etag = resp['_etag']
-        logger.info("Polissa id: %s -> etag %s" % (pol_id, etag))
-        O.GiscedataPolissa.write(pol_id, {'etag': etag})
-    except:
-        if sentry:
-            sentry.captureException()
-            raise
+    O = setup_peek()
+    etag = resp['_etag']
+    logger.info("Polissa id: %s -> etag %s" % (pol_id, etag))
+    O.GiscedataPolissa.write(pol_id, {'etag': etag})
+
