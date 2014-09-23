@@ -486,7 +486,7 @@ def push_contracts(contracts_id):
                 upd.append(em.contracts().create(amon_data))
                 first = False
             else:
-                etag = upd[-1]['etag']
+                etag = upd[-1]['_etag']
                 upd.append(em.contract(pol['name']).update(amon_data[0]), etag)
         res.append(upd[-1])
         for idx, resp in enumerate(res):
@@ -499,6 +499,6 @@ def update_etag(pol_id, resp):
     """Actualitzem l'etag.
     """
     O = setup_peek()
-    etag = resp['etag']
+    etag = resp['_etag']
     logger.info("Polissa id: %s -> etag %s" % (pol_id, etag))
     O.GiscedataPolissa.write(pol_id, {'etag': etag})
