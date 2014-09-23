@@ -72,24 +72,6 @@ def make_post_data(json_list):
 
 def get_device_serial(device_id):
     return device_id[5:].lstrip('0')
-
-
-def get_cups_from_device(device_id):
-    # Remove brand prefix and right zeros
-    serial = get_device_serial(device_id)
-    if serial in CUPS_CACHE:
-        return CUPS_CACHE[serial]
-    else:
-        # Search de meter
-        cid = O.GiscedataLecturesComptador.search([('name', '=', serial)])
-        if not cid:
-            res = False
-        else:
-            cid = O.GiscedataLecturesComptador.get(cid[0])
-            res = make_uuid('giscedata.cups.ps', cid.polissa.cups.name)
-            CUPS_UUIDS[res] = cid.polissa.cups.id
-        CUPS_CACHE[serial] = res
-        return res
         
 
 def make_utc_timestamp(timestamp):
@@ -128,277 +110,303 @@ def datestring_to_epoch(date_string):
     return dt.strftime('%s')
 
 
-def profile_to_amon(profiles):
-    """Return a list of AMON readinds.
+class AmonConverter(object):
+    def __init__(self, connection):
+        self.O = connection
 
-    {
-        "utilityId": "Utility Id",
-        "deviceId": "c1810810-0381-012d-25a8-0017f2cd3574",
-        "meteringPointId": "c1759810-90f3-012e-0404-34159e211070",
-        "readings": [
-            {
-                "type_": "electricityConsumption",
-                "unit": "kWh",
-                "period": "INSTANT",
-            },
-            {
-                "type_": "electricityKiloVoltAmpHours",
-                "unit": "kVArh",
-                "period": "INSTANT",
-            }
-        ],
-        "measurements": [
-            {
-                "type_": "electricityConsumption",
-                "timestamp": "2010-07-02T11:39:09Z", # UTC
-                "value": 7
-            },
-            {
-                "type_": "electricityKiloVoltAmpHours",
-                "timestamp": "2010-07-02T11:44:09Z", # UTC
-                "value": 6
-            }
-        ]
-    }
-    """
-    res = []
-    if not hasattr(profiles, '__iter__'):
-        profiles = [profiles]
-    for profile in profiles:
-        mp_uuid = get_cups_from_device(profile['name'])
-        if not mp_uuid:
-            print "No mp_uuid"
-            continue
-        device_uuid = make_uuid('giscedata.lectures.comptador', profile['name'])
-        res.append({
-            "deviceId": device_uuid,
-            "meteringPointId": mp_uuid,
+    def get_cups_from_device(self, device_id):
+        O = self.O
+        # Remove brand prefix and right zeros
+        serial = get_device_serial(device_id)
+        if serial in CUPS_CACHE:
+            return CUPS_CACHE[serial]
+        else:
+            # Search de meter
+            cid = O.GiscedataLecturesComptador.search([('name', '=', serial)])
+            if not cid:
+                res = False
+            else:
+                cid = O.GiscedataLecturesComptador.get(cid[0])
+                res = make_uuid('giscedata.cups.ps', cid.polissa.cups.name)
+                CUPS_UUIDS[res] = cid.polissa.cups.id
+            CUPS_CACHE[serial] = res
+            return res
+
+    def profile_to_amon(self, profiles):
+        """Return a list of AMON readinds.
+
+        {
+            "utilityId": "Utility Id",
+            "deviceId": "c1810810-0381-012d-25a8-0017f2cd3574",
+            "meteringPointId": "c1759810-90f3-012e-0404-34159e211070",
             "readings": [
                 {
-                    "type":  "electricityConsumption",
-                    "unit": "%sWh" % UNITS[profile.get('magn', 1)],
-                    "period": "CUMULATIVE",
+                    "type_": "electricityConsumption",
+                    "unit": "kWh",
+                    "period": "INSTANT",
                 },
                 {
-                    "type": "electricityKiloVoltAmpHours",
-                    "unit": "%sVArh" % UNITS[profile.geT('magn', 1)],
-                    "period": "CUMULATIVE",
+                    "type_": "electricityKiloVoltAmpHours",
+                    "unit": "kVArh",
+                    "period": "INSTANT",
                 }
             ],
             "measurements": [
                 {
-                    "type": "electricityConsumption",
-                    "timestamp": make_utc_timestamp(profile['date_end']),
-                    "value": float(profile['ai'])
+                    "type_": "electricityConsumption",
+                    "timestamp": "2010-07-02T11:39:09Z", # UTC
+                    "value": 7
                 },
                 {
-                    "type": "electricityKiloVoltAmpHours",
-                    "timestamp": make_utc_timestamp(profile['date_end']),
-                    "value": float(profile['r1'])
+                    "type_": "electricityKiloVoltAmpHours",
+                    "timestamp": "2010-07-02T11:44:09Z", # UTC
+                    "value": 6
                 }
-        ]
-        })
-    return res
-
-
-def device_to_amon(device_ids):
-    """Convert a device to AMON.
-
-    {
-        "utilityId": "Utility Id",
-        "externalId": required string UUID,
-        "meteringPointId": required string UUID,
-        "metadata": {
-            "max": "Max number",
-            "serial": "Device serial",
-            "owner": "empresa/client"
-        }, 
-    }
-    """
-    res = []
-    if not hasattr(device_ids, '__iter__'):
-        device_ids = [device_ids]
-    for dev_id in device_ids:
-        dev = O.GiscedataLecturesComptador.get(dev_id)
-        if dev.propietat == "empresa":
-            dev.propietat = "company"
-        res.append(remove_none({
-            "utilityId": "1",
-            "externalId": make_uuid('giscedata.lectures.comptador', dev_id),
-            "meteringPointId": make_uuid('giscedata.cups.ps', dev.polissa.cups.name),
-            "metadata": {
-               "max": dev.giro,
-               "serial": dev.name,
-               "owner": dev.propietat, 
-            }
-        }))
-    return res
-
-def contract_to_amon(contract_ids, context=None):
-    """Converts contracts to AMON.
-
-    {
-      "payerId":"payerID-123",
-      "ownerId":"ownerID-123",
-      "signerId":"signerID-123",
-      "power":123,
-      "dateStart":"2013-10-11T16:37:05Z",
-      "dateEnd":null,
-      "contractId":"contractID-123",
-      "customer":{
-        "customerId":"payerID-123",
-        "address":{
-          "city":"city-123",
-          "cityCode":"cityCode-123",
-          "countryCode":"ES",
-          "country":"Spain",
-          "street":"street-123",
-          "postalCode":"postalCode-123"
+            ]
         }
-      },
-      "meteringPointId":"c1759810-90f3-012e-0404-34159e211070",
-      "devices":[
+        """
+        O = self.O
+        res = []
+        if not hasattr(profiles, '__iter__'):
+            profiles = [profiles]
+        for profile in profiles:
+            mp_uuid = self.get_cups_from_device(profile['name'])
+            if not mp_uuid:
+                print "No mp_uuid"
+                continue
+            device_uuid = make_uuid('giscedata.lectures.comptador', profile['name'])
+            res.append({
+                "deviceId": device_uuid,
+                "meteringPointId": mp_uuid,
+                "readings": [
+                    {
+                        "type":  "electricityConsumption",
+                        "unit": "%sWh" % UNITS[profile.get('magn', 1)],
+                        "period": "CUMULATIVE",
+                    },
+                    {
+                        "type": "electricityKiloVoltAmpHours",
+                        "unit": "%sVArh" % UNITS[profile.geT('magn', 1)],
+                        "period": "CUMULATIVE",
+                    }
+                ],
+                "measurements": [
+                    {
+                        "type": "electricityConsumption",
+                        "timestamp": make_utc_timestamp(profile['date_end']),
+                        "value": float(profile['ai'])
+                    },
+                    {
+                        "type": "electricityKiloVoltAmpHours",
+                        "timestamp": make_utc_timestamp(profile['date_end']),
+                        "value": float(profile['r1'])
+                    }
+            ]
+            })
+        return res
+
+
+    def device_to_amon(self, device_ids):
+        """Convert a device to AMON.
+
         {
+            "utilityId": "Utility Id",
+            "externalId": required string UUID,
+            "meteringPointId": required string UUID,
+            "metadata": {
+                "max": "Max number",
+                "serial": "Device serial",
+                "owner": "empresa/client"
+            },
+        }
+        """
+        O = self.O
+        res = []
+        if not hasattr(device_ids, '__iter__'):
+            device_ids = [device_ids]
+        for dev_id in device_ids:
+            dev = O.GiscedataLecturesComptador.get(dev_id)
+            if dev.propietat == "empresa":
+                dev.propietat = "company"
+            res.append(remove_none({
+                "utilityId": "1",
+                "externalId": make_uuid('giscedata.lectures.comptador', dev_id),
+                "meteringPointId": make_uuid('giscedata.cups.ps', dev.polissa.cups.name),
+                "metadata": {
+                   "max": dev.giro,
+                   "serial": dev.name,
+                   "owner": dev.propietat,
+                }
+            }))
+        return res
+
+    def contract_to_amon(self, contract_ids, context=None):
+        """Converts contracts to AMON.
+
+        {
+          "payerId":"payerID-123",
+          "ownerId":"ownerID-123",
+          "signerId":"signerID-123",
+          "power":123,
           "dateStart":"2013-10-11T16:37:05Z",
           "dateEnd":null,
-          "deviceId":"c1810810-0381-012d-25a8-0017f2cd3574"
+          "contractId":"contractID-123",
+          "customer":{
+            "customerId":"payerID-123",
+            "address":{
+              "city":"city-123",
+              "cityCode":"cityCode-123",
+              "countryCode":"ES",
+              "country":"Spain",
+              "street":"street-123",
+              "postalCode":"postalCode-123"
+            }
+          },
+          "meteringPointId":"c1759810-90f3-012e-0404-34159e211070",
+          "devices":[
+            {
+              "dateStart":"2013-10-11T16:37:05Z",
+              "dateEnd":null,
+              "deviceId":"c1810810-0381-012d-25a8-0017f2cd3574"
+            }
+          ],
+          "version":1,
+          "activityCode":"activityCode",
+          "tariffId":"tariffID-123",
         }
-      ],
-      "version":1,
-      "activityCode":"activityCode",
-      "tariffId":"tariffID-123",
-    }
-    """
-    if not context:
-        context = {}
-    res = []
-    pol = O.GiscedataPolissa
-    modcon_obj = O.GiscedataPolissaModcontractual
-    cups_obj = O.GiscedataCupsPs
-    muni_obj = O.ResMunicipi
-    compt_obj = O.GiscedataLecturesComptador
-    if not hasattr(contract_ids, '__iter__'):
-        contract_ids = [contract_ids]
-    fields_to_read = ['modcontractual_activa', 'name', 'cups', 'comptadors', 'state']
-    for polissa in pol.read(contract_ids, fields_to_read):
-        if polissa['state'] in ('esborrany', 'validar'):
-            continue
-        if 'modcon_id' in context:
-            modcon = modcon_obj.read(context['modcon_id'])
-        elif polissa['modcontractual_activa']:
-            modcon = modcon_obj.read(polissa['modcontractual_activa'][0])
-        else:
-            print "Problema amb la polissa %s" % polissa['name']
-            continue
-        cups_fields = ['id_municipi', 'tv', 'nv', 'cpa', 'cpo', 'pnp', 'pt',
-                       'es', 'pu', 'dp']
-        cups = cups_obj.read(polissa['cups'][0], cups_fields)
-        ine = muni_obj.read(cups['id_municipi'][0], ['ine'])['ine']
-        contract = {
-            'ownerId': make_uuid('res.partner', modcon['titular'][0]),
-            'payerId': make_uuid('res.partner', modcon['pagador'][0]),
-            'dateStart': make_utc_timestamp(modcon['data_inici']),
-            'dateEnd': make_utc_timestamp(modcon['data_final']),
-            'contractId': polissa['name'],
-            'tariffId': modcon['tarifa'][1],
-            'power': int(modcon['potencia'] * 1000),
-            'version': int(modcon['name']),
-            'activityCode': modcon['cnae'] and modcon['cnae'][1] or None,
-            'meteringPointId': make_uuid('giscedata.cups.ps', modcon['cups'][1]),
-            'customer': {
-                'customerId': make_uuid('res.partner', modcon['titular'][0]),
-                'address': {
-                    'city': cups['id_municipi'][1],
-                    'cityCode': ine,
-                    'countryCode': 'ES',
-                    'street': get_street_name(cups),
-                    'postalCode': cups['dp']
+        """
+        O = self.O
+        if not context:
+            context = {}
+        res = []
+        pol = O.GiscedataPolissa
+        modcon_obj = O.GiscedataPolissaModcontractual
+        cups_obj = O.GiscedataCupsPs
+        muni_obj = O.ResMunicipi
+        compt_obj = O.GiscedataLecturesComptador
+        if not hasattr(contract_ids, '__iter__'):
+            contract_ids = [contract_ids]
+        fields_to_read = ['modcontractual_activa', 'name', 'cups', 'comptadors', 'state']
+        for polissa in pol.read(contract_ids, fields_to_read):
+            if polissa['state'] in ('esborrany', 'validar'):
+                continue
+            if 'modcon_id' in context:
+                modcon = modcon_obj.read(context['modcon_id'])
+            elif polissa['modcontractual_activa']:
+                modcon = modcon_obj.read(polissa['modcontractual_activa'][0])
+            else:
+                print "Problema amb la polissa %s" % polissa['name']
+                continue
+            cups_fields = ['id_municipi', 'tv', 'nv', 'cpa', 'cpo', 'pnp', 'pt',
+                           'es', 'pu', 'dp']
+            cups = cups_obj.read(polissa['cups'][0], cups_fields)
+            ine = muni_obj.read(cups['id_municipi'][0], ['ine'])['ine']
+            contract = {
+                'ownerId': make_uuid('res.partner', modcon['titular'][0]),
+                'payerId': make_uuid('res.partner', modcon['pagador'][0]),
+                'dateStart': make_utc_timestamp(modcon['data_inici']),
+                'dateEnd': make_utc_timestamp(modcon['data_final']),
+                'contractId': polissa['name'],
+                'tariffId': modcon['tarifa'][1],
+                'power': int(modcon['potencia'] * 1000),
+                'version': int(modcon['name']),
+                'activityCode': modcon['cnae'] and modcon['cnae'][1] or None,
+                'meteringPointId': make_uuid('giscedata.cups.ps', modcon['cups'][1]),
+                'customer': {
+                    'customerId': make_uuid('res.partner', modcon['titular'][0]),
+                    'address': {
+                        'city': cups['id_municipi'][1],
+                        'cityCode': ine,
+                        'countryCode': 'ES',
+                        'street': get_street_name(cups),
+                        'postalCode': cups['dp']
+                    }
                 }
             }
+            devices = []
+            comptador_fields = ['data_alta', 'data_baixa']
+            for comptador in compt_obj.read(polissa['comptadors'], comptador_fields):
+                devices.append({
+                    'dateStart': make_utc_timestamp(comptador['data_alta']),
+                    'dateEnd': make_utc_timestamp(comptador['data_baixa']),
+                    'deviceId': make_uuid('giscedata.lectures.comptador',
+                                          compt_obj.build_name_tg(comptador['id']))
+                })
+            contract['devices'] = devices
+            res.append(remove_none(contract, context))
+        return res
+
+    def partners_to_amon(self, partner_ids, context=None):
+        """Convert a partner to JSON Format.
+
+        {
+          "utilityId": "Utility id",
+          "externalId": "sample string 1",
+          "firstName": "sample string 3",
+          "firstSurname": "sample string 4",
+          "secondSurname": "sample string 5",
+          "address": {
+            "street": "sample string 1",
+            "postalCode": "sample string 2",
+            "city": "sample string 3",
+            "cityCode": "sample string 4",
+            "province": "sample string 5",
+            "provinceCode": "sample string 6",
+            "country": "sample string 7",
+            "countryCode": "sample string 8",
+            "parcelNumber": "sample string 9"
+          }
         }
-        devices = []
-        comptador_fields = ['data_alta', 'data_baixa']
-        for comptador in compt_obj.read(polissa['comptadors'], comptador_fields):
-            devices.append({
-                'dateStart': make_utc_timestamp(comptador['data_alta']),
-                'dateEnd': make_utc_timestamp(comptador['data_baixa']),
-                'deviceId': make_uuid('giscedata.lectures.comptador',
-                                      compt_obj.build_name_tg(comptador['id']))
-            })
-        contract['devices'] = devices
-        res.append(remove_none(contract, context))
-    return res
-
-def partners_to_amon(partner_ids, context=None):
-    """Convert a partner to JSON Format.
-
-    {
-      "utilityId": "Utility id",
-      "externalId": "sample string 1",
-      "firstName": "sample string 3",
-      "firstSurname": "sample string 4",
-      "secondSurname": "sample string 5",
-      "address": {
-        "street": "sample string 1",
-        "postalCode": "sample string 2",
-        "city": "sample string 3",
-        "cityCode": "sample string 4",
-        "province": "sample string 5",
-        "provinceCode": "sample string 6",
-        "country": "sample string 7",
-        "countryCode": "sample string 8",
-        "parcelNumber": "sample string 9"
-      }
-    }
-    """
-    if not hasattr(partner_ids, '__iter__'):
-        partner_ids = [partner_ids]
-    addr_obj = O.ResPartnerAddress
-    if not context:
-        context = {}
-    res = []
-    for partner_id in partner_ids:
-        partner = O.ResPartner.get(partner_id)
-        if not partner.vat:
-            partner.vat = '40000'
-        vat = len(partner.vat) == 9 and partner.vat or partner.vat[2:]
-        if (vat[0] not in ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
-                           'J', 'U', 'V', 'N', 'P', 'Q', 'R', 'S', 'W')
-                and ',' in partner.name):
-            first_name = partner.name.split(',')[-1].strip()
-            first_surname = ' '.join([
-                x.strip() for x in partner.name.split(',')[:-1]
-            ])
-        else:
-            first_name = partner.name
-            first_surname = ''
-        if 'address_id' in context:
-            addr = addr_obj.get(context['address_id'])
-        else:
-            if not partner.address:
-                addr = False
+        """
+        O = self.O
+        if not hasattr(partner_ids, '__iter__'):
+            partner_ids = [partner_ids]
+        addr_obj = O.ResPartnerAddress
+        if not context:
+            context = {}
+        res = []
+        for partner_id in partner_ids:
+            partner = O.ResPartner.get(partner_id)
+            if not partner.vat:
+                partner.vat = '40000'
+            vat = len(partner.vat) == 9 and partner.vat or partner.vat[2:]
+            if (vat[0] not in ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                               'J', 'U', 'V', 'N', 'P', 'Q', 'R', 'S', 'W')
+                    and ',' in partner.name):
+                first_name = partner.name.split(',')[-1].strip()
+                first_surname = ' '.join([
+                    x.strip() for x in partner.name.split(',')[:-1]
+                ])
             else:
-                addr = partner.address[0]
-        data = {
-            'utilityId': '1',
-            'externalId': make_uuid('res.partner', partner.id),
-            'firstName': first_name,
-            'firstSurname': first_surname
-        }
-        if addr:
-            data['address'] = {
-                'street': addr.street,
-                'postalCode': addr.zip,
-                'city': addr.municipi and addr.municipi.name or None,
-                'cityCode': addr.municipi and addr.municipi.ine or None,
-                'province': addr.state_id and addr.state_id.name or None,
-                'provinceCode': addr.state_id and addr.state_id.code or None,
-                'country': addr.country_id and addr.country_id.name or None,
-                'countryCode': addr.country_id and addr.country_id.code or None,
-                'parcelNumber': None
+                first_name = partner.name
+                first_surname = ''
+            if 'address_id' in context:
+                addr = addr_obj.get(context['address_id'])
+            else:
+                if not partner.address:
+                    addr = False
+                else:
+                    addr = partner.address[0]
+            data = {
+                'utilityId': '1',
+                'externalId': make_uuid('res.partner', partner.id),
+                'firstName': first_name,
+                'firstSurname': first_surname
             }
-        res.append(remove_none(data, context))
-    return res
+            if addr:
+                data['address'] = {
+                    'street': addr.street,
+                    'postalCode': addr.zip,
+                    'city': addr.municipi and addr.municipi.name or None,
+                    'cityCode': addr.municipi and addr.municipi.ine or None,
+                    'province': addr.state_id and addr.state_id.name or None,
+                    'provinceCode': addr.state_id and addr.state_id.code or None,
+                    'country': addr.country_id and addr.country_id.name or None,
+                    'countryCode': addr.country_id and addr.country_id.code or None,
+                    'parcelNumber': None
+                }
+            res.append(remove_none(data, context))
+        return res
 
 
 def setup_peek():
@@ -431,7 +439,7 @@ def push_amon_measures(measures_ids):
     em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem',
                     '/home/erp/src/conf/elgas.pem')
     O = setup_peek()
-    global O
+    amon = AmonConverter(O)
     start = datetime.now()
     mongo = pymongo.MongoClient(host=mongodb_host)
     collection = mongo[mongodb_db]['tg_billing']
@@ -445,7 +453,7 @@ def push_amon_measures(measures_ids):
         profiles[-1]['date_end'], profiles[-1]['id'],
         profiles[0]['date_end'], profiles[0]['id'],
     ))
-    profiles_to_push = profile_to_amon(profiles)
+    profiles_to_push = amon.profile_to_amon(profiles)
     stop = datetime.now()
     logger.info('Mesures transformades en %s' % (stop - start))
     start = datetime.now()
@@ -464,7 +472,7 @@ def push_contracts(contracts_id):
     em = Empowering('8449512768', '/home/erp/src/conf/elgas.pem',
                     '/home/erp/src/conf/elgas.pem')
     O = setup_peek()
-    global O
+    amon = AmonConverter(O)
     res = []
     if not isinstance(contracts_id, (list, tuple)):
         contracts_id = [contracts_id]
@@ -472,7 +480,7 @@ def push_contracts(contracts_id):
         pol = O.GiscedataPolissa.read(cid, ['modcontractuals_ids', 'name'])
         first = True
         for modcon_id in reversed(pol['modcontractuals_ids']):
-            amon_data = contract_to_amon(cid, {'modcon_id': modcon_id})
+            amon_data = amon.contract_to_amon(cid, {'modcon_id': modcon_id})
             if first:
                 res += em.contracts().create(amon_data)
                 first = False
