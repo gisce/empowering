@@ -486,8 +486,8 @@ def push_contracts(contracts_id):
     res = []
     if not isinstance(contracts_id, (list, tuple)):
         contracts_id = [contracts_id]
-    for cid in contracts_id:
-        pol = O.GiscedataPolissa.read(cid, ['modcontractuals_ids', 'name'])
+    for pol in O.GiscedataPolissa.read(contracts_id, ['modcontractuals_ids', 'name']):
+        cid = pol['id']
         upd = []
         first = True
         for modcon_id in reversed(pol['modcontractuals_ids']):
