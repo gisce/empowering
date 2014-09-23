@@ -500,9 +500,7 @@ def push_contracts(contracts_id):
                     etag = upd[-1]['_etag']
                     upd.append(em.contract(pol['name']).update(amon_data, etag))
             res.append(upd[-1])
-            for idx, resp in enumerate(res):
-                pol_id = [contracts_id[idx]]
-                update_etag.delay(pol_id, resp)
+            update_etag.delay(cid, upd[-1])
         except:
             q = Queue('contracts_to_check', connection=Redis())
             q.enqueue(push_contracts, cid)
