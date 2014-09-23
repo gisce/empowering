@@ -481,13 +481,13 @@ def push_contracts(contracts_id):
         upd = []
         first = True
         for modcon_id in reversed(pol['modcontractuals_ids']):
-            amon_data = amon.contract_to_amon(cid, {'modcon_id': modcon_id})
+            amon_data = amon.contract_to_amon(cid, {'modcon_id': modcon_id})[0]
             if first:
                 upd.append(em.contracts().create(amon_data))
                 first = False
             else:
                 etag = upd[-1]['_etag']
-                upd.append(em.contract(pol['name']).update(amon_data[0]), etag)
+                upd.append(em.contract(pol['name']).update(amon_data, etag))
         res.append(upd[-1])
         for idx, resp in enumerate(res):
             pol_id = [contracts_id[idx]]
