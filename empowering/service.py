@@ -82,10 +82,14 @@ class Empowering(base.Resource):
         self.add_filter(self.use_json)
         self.add_filter(self.add_company_id)
 
+        extra_handlers = ()
         # We have to use SSL Client
-        https_handler = HTTPSClientAuthHandler(self.key_file, self.cert_file)
-        filter_handler = HTTPEmpoweringFilterHandler()
-        urllib2_executor.use(extra_handlers=(https_handler, filter_handler))
+        if self.key_file and self.cert_file:
+            extra_handlers += (
+                HTTPSClientAuthHandler(self.key_file, self.cert_file),
+            )
+        extra_handlers += (HTTPEmpoweringFilterHandler(), )
+        urllib2_executor.use(extra_handlers=extra_handlers)
 
     def use_json(self, request):
         if request.method.upper() not in http.URLENCODE_METHODS:
