@@ -190,7 +190,7 @@ class AmonConverter(object):
                     },
                     {
                         "type": "electricityKiloVoltAmpHours",
-                        "unit": "%sVArh" % UNITS[profile.geT('magn', 1)],
+                        "unit": "%sVArh" % UNITS[profile.get('magn', 1)],
                         "period": "CUMULATIVE",
                     }
                 ],
