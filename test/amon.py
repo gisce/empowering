@@ -458,7 +458,7 @@ def check_response(response, amon_data):
     return True
 
 
-@job('measures', connection=Redis())
+@job('measures', connection=Redis(), timeout=3600)
 @sentry.capture_exceptions
 def push_amon_measures(measures_ids):
     """Pugem les mesures a l'Insight Engine
@@ -494,7 +494,7 @@ def push_amon_measures(measures_ids):
     mongo.connection.disconnect()
 
 
-@job('contracts', connection=Redis())
+@job('contracts', connection=Redis(), timeout=3600)
 @sentry.capture_exceptions
 def push_contracts(contracts_id):
     """Pugem els contractes
