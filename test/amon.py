@@ -444,6 +444,20 @@ def setup_mongodb():
     return mongo[mongodb_database]
 
 
+def check_response(response, amon_data):
+    if response['_status'] != 'OK':
+        sentry.captureMessage(
+            "Error on Empowering response (%s)" % response['_status'],
+            level=logging.ERROR,
+            data={
+                'amon_data': amon_data,
+                'issues': response['_issues']
+            }
+        )
+        return False
+    return True
+
+
 @job('measures', connection=Redis())
 @sentry.capture_exceptions
 def push_amon_measures(measures_ids):
@@ -502,11 +516,13 @@ def push_contracts(contracts_id):
         for modcon_id in reversed(pol['modcontractuals_ids']):
             amon_data = amon.contract_to_amon(cid, {'modcon_id': modcon_id})[0]
             if first:
-                upd.append(em.contracts().create(amon_data))
+                response = em.contracts().create(amon_data)
                 first = False
             else:
                 etag = upd[-1]['_etag']
-                upd.append(em.contract(pol['name']).update(amon_data, etag))
+                response = em.contract(pol['name']).update(amon_data, etag)
+            if check_response(response, amon_data):
+                upd.append(response)
         if upd:
             res.append(upd[-1])
             update_etag.delay(cid, upd[-1])
