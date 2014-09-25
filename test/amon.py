@@ -26,8 +26,6 @@ DEVICE_MP_REL = RedisDict('DEVICE_MP_REL', redis_con)
 CUPS_UUIDS = RedisDict('CUPS_UUIDS', redis_con)
 PARTNERS = []
 UNITS = {1: '', 1000: 'k'}
-mongodb_host = '192.168.2.196'
-mongodb_db = 'mongodb_distri'
 
 logger = logging.getLogger('amon')
 hdlr = logging.FileHandler('/tmp/amon.log')
@@ -435,6 +433,17 @@ def setup_ooop():
     return OOOP(**ooop_config)
 
 
+def setup_mongodb():
+    mongodb_host = os.environ.get('MONGODB_HOST')
+    mongodb_database = os.environ.get('MONGODB_DATABASE')
+    if not mongodb_host:
+        raise Exception('No MONGODB_HOST environment variable defined!')
+    if not mongodb_database:
+        raise Exception('No MONGODB_DATABASE environment variable defined!')
+    mongo = pymongo.MongoClient(host=mongodb_host)
+    return mongo[mongodb_database]
+
+
 @job('measures', connection=Redis())
 @sentry.capture_exceptions
 def push_amon_measures(measures_ids):
@@ -448,8 +457,8 @@ def push_amon_measures(measures_ids):
     O = setup_peek()
     amon = AmonConverter(O)
     start = datetime.now()
-    mongo = pymongo.MongoClient(host=mongodb_host)
-    collection = mongo[mongodb_db]['tg_billing']
+    mongo = setup_mongodb()
+    collection = mongo['tg_billing']
     mdbprofiles = collection.find({'id': {'$in': measures_ids}},
                                   {'name': 1, 'id': 1, '_id': 0,
                                   'ai': 1, 'r1': 1, 'date_end': 1},
@@ -468,7 +477,7 @@ def push_amon_measures(measures_ids):
     stop = datetime.now()
     logger.info('Mesures enviades en %s' % (stop - start))
     logger.info("%s measures creades" % len(measures))
-    mongo.disconnect()
+    mongo.connection.disconnect()
 
 
 @job('contracts', connection=Redis())
