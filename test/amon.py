@@ -11,9 +11,7 @@ import pymongo
 
 import times
 import erppeek
-from ooop import OOOP
 from rq.decorators import job
-from rq import Queue
 from redis import Redis
 from modeldict import RedisDict
 from raven import Client
@@ -124,14 +122,16 @@ class AmonConverter(object):
             return CUPS_CACHE[serial]
         else:
             # Search de meter
-            cid = O.GiscedataLecturesComptador.search([('name', '=', serial)])
+            cid = O.GiscedataLecturesComptador.search([
+                ('name', '=', serial)
+            ], context={'active_test': False})
             if not cid:
                 res = False
             else:
                 cid = O.GiscedataLecturesComptador.get(cid[0])
                 res = make_uuid('giscedata.cups.ps', cid.polissa.cups.name)
                 CUPS_UUIDS[res] = cid.polissa.cups.id
-            CUPS_CACHE[serial] = res
+                CUPS_CACHE[serial] = res
             return res
 
     def profile_to_amon(self, profiles):
@@ -419,18 +419,6 @@ def setup_peek():
             peek_config[key] = value
     logger.info("Using PEEK CONFIG: %s" % peek_config)
     return erppeek.Client(**peek_config)
-
-
-def setup_ooop():
-    ooop_config = {}
-    for key, value in os.environ.items():
-        if key.startswith('OOOP_'):
-            key = key.split('_')[1].lower()
-            if key == 'port':
-                value = int(value)
-            ooop_config[key] = value
-    logger.info("Using OOOP CONFIG: %s" % ooop_config)
-    return OOOP(**ooop_config)
 
 
 def setup_mongodb():

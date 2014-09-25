@@ -28,9 +28,7 @@ if __name__ == '__main__':
             }
             mongo = setup_mongodb()
             collection = mongo['tg_billing']
-            measures = collection.find({
-                "type": "day", "valid": True, "value": "a", "period": 0
-            }, {'id': 1})
+            measures = collection.find(filters, {'id': 1})
             measures_to_push = []
             for idx, measure in enumerate(measures):
                 if idx and not idx % bucket:
@@ -50,7 +48,7 @@ if __name__ == '__main__':
             x['polissa'][0]
             for x in O.GiscedataLecturesComptador.read(cids, ['polissa'])
         ]
-        contracts_ids = set(contracts_ids)
+        contracts_ids = list(set(contracts_ids))
         contracts_ids = O.GiscedataPolissa.search([
             ('id', 'in', contracts_ids),
             ('state', 'not in', ('esborrany', 'validar'))
