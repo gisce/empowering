@@ -51,6 +51,10 @@ if __name__ == '__main__':
             for x in O.GiscedataLecturesComptador.read(cids, ['polissa'])
         ]
         contracts_ids = set(contracts_ids)
+        contracts_ids = O.GiscedataPolissa.search([
+            ('id', 'in', contracts_ids),
+            ('state', 'not in', ('esborrany', 'validar'))
+        ])
         popper = Popper(contracts_ids)
         bucket = 500
         pops = popper.pop(bucket)

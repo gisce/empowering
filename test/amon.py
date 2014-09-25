@@ -523,9 +523,7 @@ def push_contracts(contracts_id):
                 response = em.contract(pol['name']).update(amon_data, etag)
             if check_response(response, amon_data):
                 upd.append(response)
-        if upd:
-            res.append(upd[-1])
-            update_etag.delay(cid, upd[-1])
+        update_etag.delay(cid, upd[-1])
 
 
 @job('etag', connection=Redis())
