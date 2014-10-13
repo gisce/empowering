@@ -1,5 +1,12 @@
+from datetime import datetime
 import uuid
 import times
+from arrow.parser import DateTimeParser
+
+
+# Monkey patch parse function for times library (newer)
+parser = DateTimeParser()
+times.parse = parser.parse_iso
 
 
 def remove_none(struct, context=None):
@@ -60,3 +67,21 @@ def make_utc_timestamp(timestamp, timezone='Europe/Madrid'):
     if not timestamp:
         return None
     return times.to_universal(timestamp, timezone).isoformat('T') + 'Z'
+
+
+def make_local_timestamp(timestamp, timezone='Europe/Madrid'):
+    if not timestamp:
+        return None
+    if isinstance(timestamp, basestring):
+        timestamp = times.parse(timestamp.replace('Z', ''))
+    return times.to_local(timestamp, timezone).strftime('%Y-%m-%d %H:%M:%S')
+
+
+def datestring_to_epoch(date_string):
+    if not date_string:
+        return None
+    if not isinstance(date_string, datetime):
+        dt = datetime.strptime(date_string, '%Y-%m-%d')
+    else:
+        dt = date_string
+    return dt.strftime('%s')
