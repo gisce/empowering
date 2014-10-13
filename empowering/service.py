@@ -44,10 +44,6 @@ class AmonMeasuresMeasurements(EmpoweringResource):
     path = 'amon_measures_measurements'
 
     @base.apimethod
-    def get(self):
-        raise base.MethodNotSupported
-
-    @base.apimethod
     def create(self, obj):
         raise base.MethodNotSupported
 
@@ -74,10 +70,11 @@ class Empowering(base.Resource):
     Empowering Insight Engine Service API.
     """
     def __init__(self, company_id, key_file=None, cert_file=None, version='v1'):
-        self.company_id = company_id
+        self.company_id = str(company_id)
         self.key_file = key_file
         self.cert_file = cert_file
         endpoint = "https://api.empowering.cimne.com"
+        endpoint = "http://91.121.140.152:5111"
         self.apiroot = '%s/%s' % (endpoint, version)
         self.add_filter(self.use_json)
         self.add_filter(self.add_company_id)
