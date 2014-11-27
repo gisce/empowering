@@ -4,7 +4,7 @@ from empowering.utils import searchparams_to_querystring
 import calendar
 
 class OTResult(EmpoweringResource):
-    def pull(self, contract=None, period=None):
+    def pull(self, period=None, contract=None):
         search_params = []
 
         if contract:
@@ -45,7 +45,7 @@ class OT204Results(OTResult):
 class OT503Results(OTResult):
     path = 'OT503Results'
 
-    def pull(self, contract=None, period=None):
+    def pull(self, period=None, contract=None):
         # Thanks empowering for keeping the acorded API :D </ironic>
 
         search_params = []
