@@ -20,6 +20,8 @@ class OT201Results(EmpoweringResource):
 class OT204Results(EmpoweringResource):
     path = 'OT204Results'
 
+class OT503Results(EmpoweringResource):
+    path = 'OT503Results'
 
 class BT111Results(EmpoweringResource):
     path = 'BT111Results'

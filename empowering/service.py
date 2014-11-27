@@ -162,6 +162,10 @@ class Empowering(base.Resource):
     def ot204_results(self):
         return OT204Results(self)
 
+    @base.resource(OT503Results)
+    def ot503_results(self):
+        return OT503Results(self)
+
     @base.resource(BT111Results)
     def bt111_result(self, result_id):
         return BT111Results(self, result_id)
