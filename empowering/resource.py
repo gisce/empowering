@@ -25,3 +25,26 @@ class EmpoweringResource(base.RESTResource):
         request = http.Request('GET', self.get_url(), params)
 
         return request, parsers.parse_json
+
+    def multiget(self, where=None, sort=None):
+        page = 0
+        all_results = {'_items': []}
+        more_items = True
+        while more_items:
+            more_items = False
+
+            if page:
+                paged_query = where + '&page=%s' % page
+            else:
+                paged_query = where
+
+            result = self.get(where=paged_query, sort=sort)
+            if '_items' in result:
+                all_results['_items'].extend(result['_items'])
+
+            if 'next' in result['_links']:
+                page = result['_links']['next']['href'].split("&page=")[1]
+                more_items = True
+        return all_results
+
+
