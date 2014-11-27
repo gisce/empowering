@@ -26,7 +26,10 @@ class EmpoweringResource(base.RESTResource):
 
         return request, parsers.parse_json
 
-    def multiget(self, where=None, sort=None):
+    def multiget(self, where=None, sort=None, max_results=None):
+        query = where
+        if max_results:
+            query += '&max_results=%d' % max_results
         page = 0
         all_results = {'_items': []}
         more_items = True
@@ -34,10 +37,9 @@ class EmpoweringResource(base.RESTResource):
             more_items = False
 
             if page:
-                paged_query = where + '&page=%s' % page
+                paged_query = query + '&page=%s' % page
             else:
-                paged_query = where
-
+                paged_query = query
             result = self.get(where=paged_query, sort=sort)
             if '_items' in result:
                 all_results['_items'].extend(result['_items'])

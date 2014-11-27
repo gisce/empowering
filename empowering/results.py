@@ -75,7 +75,8 @@ class OT503Results(OTResult):
             search_params.extend(params)
 
         query = searchparams_to_querystring(search_params)
-        return self.multiget(where=query, sort='[("time", 1)]')
+        return self.multiget(where=query, sort='[("time", 1)]',
+                             max_results=last_day)
 
 
 class BT111Results(OTResult):
