@@ -8,7 +8,7 @@ class OTResult(EmpoweringResource):
         search_params = []
 
         if contract:
-            if type(contract) is int:
+            if type(contract) is not str:
                 contract = str(contract)
             param = ('contractId', '=', contract)
             search_params.append(param)
