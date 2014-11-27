@@ -1,27 +1,82 @@
 from empowering.service import EmpoweringResource
+from empowering.utils import searchparams_to_querystring
 
+import calendar
 
-class OT101Results(EmpoweringResource):
+class OTResult(EmpoweringResource):
+    def pull(self, contract=None, period=None):
+        search_params = []
+
+        if contract:
+            if type(contract) is int:
+                contract = str(contract)
+            param = ('contractId', '=', contract)
+            search_params.append(param)
+
+        if period:
+            if type(period) is not int:
+                period = int(period)
+            param = ('month', '=', period)
+            search_params.append(param)
+
+        query = searchparams_to_querystring(search_params)
+        return self.multiget(where=query)
+
+class OT101Results(OTResult):
     path = 'OT101Results'
 
 
-class OT103Results(EmpoweringResource):
+class OT103Results(OTResult):
     path = 'OT103Results'
 
 
-class OT106Results(EmpoweringResource):
+class OT106Results(OTResult):
     path = 'OT106Results'
 
 
-class OT201Results(EmpoweringResource):
+class OT201Results(OTResult):
     path = 'OT201Results'
 
 
-class OT204Results(EmpoweringResource):
+class OT204Results(OTResult):
     path = 'OT204Results'
 
-class OT503Results(EmpoweringResource):
+
+class OT503Results(OTResult):
     path = 'OT503Results'
 
-class BT111Results(EmpoweringResource):
+    def pull(self, contract=None, period=None):
+        # Thanks empowering for keeping the acorded API :D </ironic>
+
+        search_params = []
+
+        if contract:
+            if type(contract) is int:
+                contract = str(int)
+            param = ('contractId', '=', contract)
+            search_params.append(param)
+        if period:
+            if type(period) is not str:
+                # For API coherence period should be int but
+                # is not useful here
+                period = str(period)
+
+            year = period[:4]
+            month = period[-2:]
+            last_day = calendar.monthrange(int(year), int(month))[1]
+
+            start_period = '%s%s%s' % (year, month, '01')
+            end_period = '%s%s%s' % (year, month, last_day)
+
+            params = [
+                ('time', '>=', int(start_period)),
+                ('time', '<=', int(end_period)),
+            ]
+            search_params.extend(params)
+
+        query = searchparams_to_querystring(search_params)
+        return self.multiget(where=query, sort='[("time", 1)]')
+
+
+class BT111Results(OTResult):
     path = 'BT111Results'
