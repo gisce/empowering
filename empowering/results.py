@@ -48,8 +48,8 @@ class OT503Results(OTResult):
     def pull(self, period=None, contract=None):
         # Thanks empowering for keeping the acorded API :D </ironic>
 
+        last_day = 31
         search_params = []
-
         if contract:
             if type(contract) is not str:
                 contract = str(contract)
