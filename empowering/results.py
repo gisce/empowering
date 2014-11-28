@@ -51,8 +51,8 @@ class OT503Results(OTResult):
         search_params = []
 
         if contract:
-            if type(contract) is int:
-                contract = str(int)
+            if type(contract) is not str:
+                contract = str(contract)
             param = ('contractId', '=', contract)
             search_params.append(param)
         if period:
