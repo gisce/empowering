@@ -132,7 +132,7 @@ class OTCaching(object):
         return report
 
     def error_clear(self, ot_code=None, contract=None, period=None,
-                    validation_date='today')
+                    validation_date='today'):
         """
         " Clear errors from database, si recomended to call this methond
         " just after error_report with the same parameters.
@@ -161,7 +161,7 @@ class OTCaching(object):
 
         return [x for x in self._result_collection.find(query)]
 
-    def _store(self, result)
+    def _store(self, result):
         self._result_collection.insert(result)
 
     def _delete_cached(self, contract, period=None):
@@ -186,25 +186,25 @@ class OTCaching(object):
 
 class OT101Caching(OTCaching):
     def __init__(self, empowering_service, mongo_connection):
-        super(self, OT101).(empowering_service, 'ot101_results',
+        super(self, OT101)(empowering_service, 'ot101_results',
                             mongo_connection, 'ot101', 'empowering_error',
                             'month', 'consumption')
 
 class OT103Caching(OTCaching):
     def __init__(self, empowering_service, mongo_connection):
-        super(self, OT101).(empowering_service, 'ot103_results',
+        super(self, OT103)(empowering_service, 'ot103_results',
                             mongo_connection, 'ot103', 'empowering_error',
                             'month', 'consumption')
 
 class OT201Caching(OTCaching):
     def __init__(self, empowering_service, mongo_connection):
-        super(self, OT101).(empowering_service, 'ot201_results',
+        super(self, OT201)(empowering_service, 'ot201_results',
                             mongo_connection, 'ot201', 'empowering_error',
                             'month', 'actualConsumption')
 
 class OT503Cahing(OTCaching):
     def __init__(self, empowering_service, mongo_connection):
-        super(self, OT101).(empowering_service, 'ot503_results',
+        super(self, OT503)(empowering_service, 'ot503_results',
                             mongo_connection, 'ot503', 'empowering_error',
                             'time', 'consumption')
 
