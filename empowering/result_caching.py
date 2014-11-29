@@ -47,6 +47,9 @@ class OTCaching(object):
         """ Validate the contract according to the values dict.
         " Values dict contain period as key and value as value.
         " Will create the error log in collection according to log_errors param
+        "
+        " values example:
+        " {'201301': 42.2, '201302': 75.3}
         """
         cached_results = self._get(contract, period)
         for result in cached_results:
@@ -80,8 +83,8 @@ class OTCaching(object):
             error = NO_RESULT_ERROR
             self._insert_error(contract, v_period, error)
 
-    def error_report(self, ot_code='all', contract=None, period=None,
-                     validation_date='today', clear_errors=False):
+    def error_report(self, ot_code=None, contract=None, period=None,
+                     validation_date='today'):
         """
         " @return an string containing a report of the errors happened
         """
@@ -93,7 +96,7 @@ class OTCaching(object):
 
         if validation_date:
             search_params.update({'validation_date': validation_date})
-        if ot_code != 'all':
+        if ot_code:
             search_params.update({'ot_code': ot_code})
         if period:
             search_params.update({'period': period})
@@ -106,14 +109,14 @@ class OTCaching(object):
             report += 'WARNING: There are %d stored old errors.\n' % old_errors
 
         filter_msg += 'REPORT FILTER: %s ot - %s contract %s period %s date\n'
-        filter_msg %= ot_code 
+        filter_msg %= ot_code and ot_code or 'all' 
         filter_msg %= contract and contract or 'all'
         filter_msg %= period and period or 'all'
         filter_msg %= validation_date and validation_date or 'all'
 
         report += filter_msg
 
-        if ot_code == 'all':
+        if not ot_code:
             ot_codes = AVALIABLE_ONLINE_TOOLS
         else:
             ot_codes = [ot_code]
@@ -128,7 +131,7 @@ class OTCaching(object):
 
         return report
 
-    def error_clear(self, ot_code='all', contract=None, period=None,
+    def error_clear(self, ot_code=None, contract=None, period=None,
                     validation_date='today')
         """
         " Clear errors from database, si recomended to call this methond
@@ -141,7 +144,7 @@ class OTCaching(object):
 
         if validation_date:
             search_params.update({'validation_date': validation_date})
-        if ot_code != 'all':
+        if ot_code:
             search_params.update({'ot_code': ot_code})
         if period:
             search_params.update({'period': period})
