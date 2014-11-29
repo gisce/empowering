@@ -202,7 +202,7 @@ class OT201Caching(OTCaching):
                             mongo_connection, 'ot201', 'empowering_error',
                             'month', 'actualConsumption')
 
-class OT503Cahing(OTCaching):
+class OT503Caching(OTCaching):
     def __init__(self, empowering_service, mongo_connection):
         super(OT503Caching, self).__init__(empowering_service, 'ot503_results',
                             mongo_connection, 'ot503', 'empowering_error',
