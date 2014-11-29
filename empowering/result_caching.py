@@ -13,17 +13,17 @@ class OTCaching(object):
     def __init__(self, empowering_service, empowering_resource,
                  mongo_connection, ot_code, log_error_collection,
                  period_key, value_key):
-        self._empowering_resource = getattr(empowering_serivce,
+        self._empowering_resource = getattr(empowering_service,
                                             empowering_resource)
-        self._result_collection = mongo_connection.get_collection(ot_code)
-        self._log_error_collection = mongo_connection.get_collection(
-                                                      log_error_collection)
+        self._result_collection = getattr(mongo_connection, ot_code)
+        self._log_error_collection = getattr(mongo_connection,
+                                             log_error_collection)
         # Key used in results to specify the period
         self._period_key = period_key
         self._value_key = value_key
         self._ot_code = ot_code
 
-    def pull_contract(self, cursor, uid, contract, period=None):
+    def pull_contract(self, contract, period=None):
         """ Will ask for results of online tool for the specidied
         " contract for ALL periods if is not specidied in period param.
         " Pulled results will be stored in the mongo database
@@ -186,25 +186,25 @@ class OTCaching(object):
 
 class OT101Caching(OTCaching):
     def __init__(self, empowering_service, mongo_connection):
-        super(self, OT101)(empowering_service, 'ot101_results',
-                            mongo_connection, 'ot101', 'empowering_error',
-                            'month', 'consumption')
+        super(OT101Caching, self).__init__(empowering_service, 'ot101_results',
+                                  mongo_connection, 'ot101', 'empowering_error',
+                                  'month', 'consumption')
 
 class OT103Caching(OTCaching):
     def __init__(self, empowering_service, mongo_connection):
-        super(self, OT103)(empowering_service, 'ot103_results',
+        super(OT103Caching, self).__init__(empowering_service, 'ot103_results',
                             mongo_connection, 'ot103', 'empowering_error',
                             'month', 'consumption')
 
 class OT201Caching(OTCaching):
     def __init__(self, empowering_service, mongo_connection):
-        super(self, OT201)(empowering_service, 'ot201_results',
+        super(OT201Caching, self).__init__(empowering_service, 'ot201_results',
                             mongo_connection, 'ot201', 'empowering_error',
                             'month', 'actualConsumption')
 
 class OT503Cahing(OTCaching):
     def __init__(self, empowering_service, mongo_connection):
-        super(self, OT503)(empowering_service, 'ot503_results',
+        super(OT503Caching, self).__init__(empowering_service, 'ot503_results',
                             mongo_connection, 'ot503', 'empowering_error',
                             'time', 'consumption')
 
