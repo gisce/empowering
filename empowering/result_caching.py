@@ -43,7 +43,7 @@ class OTCaching(object):
                 self._delete_cached(contract, result_period)
             self._store(result)
 
-    def validate_contract(values, contract, period=None, log_errors=True):
+    def validate_contract(self, values, contract, period=None, log_errors=True):
         """ Validate the contract according to the values dict.
         " Values dict contain period as key and value as value.
         " Will create the error log in collection according to log_errors param
