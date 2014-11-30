@@ -87,7 +87,7 @@ class OTCaching(object):
             # There are still values to be checked
             error = NO_RESULT_ERROR
             self._insert_error(contract, v_period, error)
-
+    
     def error_report(self, ot_code=None, contract=None, period=None,
                      validation_date='today'):
         """
@@ -101,24 +101,23 @@ class OTCaching(object):
 
         if validation_date:
             search_params.update({'validation_date': validation_date})
-        if ot_code:
-            search_params.update({'ot_code': ot_code})
         if period:
             search_params.update({'period': period})
         if contract:
             search_params.update({'contract': contract})
 
-        old_search = {'$ne': {'validation_date', validation_date}}
+        old_search = {'validation_date': {'$ne': validation_date}}
         old_errors = self._log_error_collection.find(old_search).count()
         if old_errors:
             report += 'WARNING: There are %d stored old errors.\n' % old_errors
 
-        filter_msg += 'REPORT FILTER: %s ot - %s contract %s period %s date\n'
-        filter_msg %= ot_code and ot_code or 'all' 
-        filter_msg %= contract and contract or 'all'
-        filter_msg %= period and period or 'all'
-        filter_msg %= validation_date and validation_date or 'all'
-
+        filter_msg = 'REPORT FILTER: %s ot - %s contract %s period %s date\n'
+        filter_msg %= (
+            ot_code and ot_code or 'all',
+            contract and contract or 'all',
+            period and period or 'all',
+            validation_date and validation_date or 'all'
+        )
         report += filter_msg
 
         if not ot_code:
@@ -130,7 +129,7 @@ class OTCaching(object):
             report += '%s\n' % ot
             for error in (WRONG_VALUE_ERROR, NO_RESULT_ERROR, NO_STORED_ERROR):
                 errors = search_params.copy()
-                errors.update({'error': error})
+                errors.update({'error': error, 'ot_code': ot})
                 count = self._log_error_collection.find(errors).count()
                 report += '\t%s: %d\n' % (error, count)
 
@@ -161,7 +160,7 @@ class OTCaching(object):
     def _get(self, contract, period=None):
         query = {'contractId': contract}
         if period:
-            query.update({self._period_key: period})
+            query.update({self._period_key: int(period)})
 
         return [x for x in self._result_collection.find(query)]
 
