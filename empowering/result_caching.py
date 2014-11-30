@@ -53,7 +53,7 @@ class OTCaching(object):
         """
         cached_results = self._get(contract, period)
         for result in cached_results:
-            cached_period = result[self._period_key]
+            cached_period = str(result[self._period_key])
             cached_value = result[self._value_key]
             error = None
 
@@ -73,7 +73,7 @@ class OTCaching(object):
                 if log_errors:
                     self._insert_error(contract, cached_period, error)
 
-            if cached_period not in values:
+            if cached_period in values:
                 # Pop from values to know if there are missing results
                 values.pop(cached_period)
 
