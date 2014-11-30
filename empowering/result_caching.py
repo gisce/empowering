@@ -62,7 +62,7 @@ class OTCaching(object):
                 # No stored value to compare with.
                 # So we discart the empowering result
                 error = NO_STORED_ERROR
-            elif cached_value != values[cached_period]:
+            elif not self._is_valid(cached_value, values[cached_period]):
                 # Stored and empowering result missmatch
                 # So we discart the empowering result
                 error = WRONG_VALUE_ERROR
@@ -157,7 +157,6 @@ class OTCaching(object):
             search_params.update({'contract': contract})
 
         self._log_error_collection.remove(search_params)
-
  
     def _get(self, contract, period=None):
         query = {'contractId': contract}
@@ -177,6 +176,12 @@ class OTCaching(object):
             })
     
         self._result_collection.remove(remove_query)
+
+    def _is_valid(self, cached, reference):
+        """ Return True if cached value is valid according to the
+        " value reference, false otherwise
+        """
+        return abs(reference - cached) < 2
 
     def _insert_error(self, contract, period, error_message,
                       error_details=None):
