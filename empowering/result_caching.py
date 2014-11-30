@@ -56,6 +56,7 @@ class OTCaching(object):
             cached_period = str(result[self._period_key])
             cached_value = result[self._value_key]
             error = None
+            error_details = {}
 
             if cached_period not in values:
                 # No stored value to compare with.
@@ -65,19 +66,24 @@ class OTCaching(object):
                 # Stored and empowering result missmatch
                 # So we discart the empowering result
                 error = WRONG_VALUE_ERROR
+                error_details.update({
+                    'expected': values[cached_period],
+                    'cached': cached_value
+                })
             else:
                 pass #Everything OK :)
 
             if error:
                 self._delete_cached(contract, cached_period)
                 if log_errors:
-                    self._insert_error(contract, cached_period, error)
+                    self._insert_error(contract, cached_period, error,
+                                       error_details)
 
             if cached_period in values:
                 # Pop from values to know if there are missing results
                 values.pop(cached_period)
 
-        for v_period, v_value in values:
+        for v_period, v_value in values.iteritems():
             # There are still values to be checked
             error = NO_RESULT_ERROR
             self._insert_error(contract, v_period, error)
@@ -172,7 +178,8 @@ class OTCaching(object):
     
         self._result_collection.remove(remove_query)
 
-    def _insert_error(self, contract, period, error_message):
+    def _insert_error(self, contract, period, error_message,
+                      error_details=None):
         error = {
             'ot_code': self._ot_code,
             'contract': contract,
@@ -180,6 +187,8 @@ class OTCaching(object):
             'error': error_message,
             'validation_date': time.strftime('%Y-%m-%d')
         }
+        if error_details:
+            error.update(error_details)
         self._log_error_collection.insert(error)
 
 
