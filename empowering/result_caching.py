@@ -53,7 +53,7 @@ class OTCaching(object):
         """
         cached_results = self._get(contract, period)
         for result in cached_results:
-            cached_period = str(result[self._period_key])
+            cached_period = str(int(result[self._period_key]))
             cached_value = result[self._value_key]
             error = None
             error_details = {}
@@ -193,7 +193,9 @@ class OTCaching(object):
         }
         if error_details:
             error.update(error_details)
-        self._log_error_collection.insert(error)
+        if not self._log_error_collection.find(error).count():
+            # Avoid insert errors twice
+            self._log_error_collection.insert(error)
 
 
 class OT101Caching(OTCaching):
