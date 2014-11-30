@@ -61,18 +61,17 @@ class OTCaching(object):
                 # No stored value to compare with.
                 # So we discart the empowering result
                 error = NO_STORED_ERROR
-                self._delete_cached(contract, cached_period)
-
-            if cached_value != values[cached_period]:
+            elif cached_value != values[cached_period]:
                 # Stored and empowering result missmatch
                 # So we discart the empowering result
                 error = WRONG_VALUE_ERROR
-                self._delete_cached(contract, cached_period)
             else:
                 pass #Everything OK :)
 
-            if error and log_errors:
-                self._insert_error(contract, cached_period, error)
+            if error:
+                self._delete_cached(contract, cached_period)
+                if log_errors:
+                    self._insert_error(contract, cached_period, error)
 
             if cached_period not in values:
                 # Pop from values to know if there are missing results
@@ -181,7 +180,7 @@ class OTCaching(object):
             'error': error_message,
             'validation_date': time.strftime('%Y-%m-%d')
         }
-        self._log_error_collection(error)
+        self._log_error_collection.insert(error)
 
 
 class OT101Caching(OTCaching):
