@@ -223,8 +223,8 @@ class OT503Caching(OTCaching):
                             'time', 'consumption')
 
     def _get_period_sum(self, contract, period):
-        period_start = int(period + 01)
-        period_end = int(period + 31)
+        period_start = int(period + '01')
+        period_end = int(period + '31')
 
         aggregate = [
             {
@@ -245,18 +245,19 @@ class OT503Caching(OTCaching):
                 }
             }
         ]
+
         result = self._result_collection.aggregate(aggregate)
-        if 'result' in result and 'total' in result['result']:
-            return result['result']['total']
+        if 'result' in result and 'total' in result['result'][0]:
+            return result['result'][0]['total']
         else:
             return None
 
-    def _delete_cached(contract, period):
+    def _delete_month_period(self, contract, period):
         """
         " Delete all cached in the given period
         """
-        period_start = int(period + 01)
-        period_end = int(period + 31)
+        period_start = int(period + '01')
+        period_end = int(period + '31')
         remove = {
             "contractId": contract,
             "time": {
@@ -266,14 +267,14 @@ class OT503Caching(OTCaching):
         }
         self._result_collection.remove(remove)
 
-    def _delete_all_periods_except(contrect, period_list):
+    def _delete_all_periods_except(self, contract, period_list):
         """
         " Delete al results for the contract not in the period_list
         """
         keep_ids = []
         for period in period_list:
-            period_start = int(period + 01)
-            period_end = int(period + 31)
+            period_start = int(period + '01')
+            period_end = int(period + '31')
             query = {
                 "contractId": contract,
                 "time": {
@@ -285,14 +286,14 @@ class OT503Caching(OTCaching):
             keep_ids.extend(ids)
 
         remove = {
-            "contractId": contrect,
+            "contractId": contract,
             "_id": { '$nin': keep_ids }
         }
 
         # Identify them
         invalids_cursor = self._result_collection.find(remove,
                                                        {self._period_key: 1})
-        to_delete = [x[self._period_key] for x in delete_invalids]
+        to_delete = [x[self._period_key] for x in invalids_cursor]
         # Delete them
 
         self._result_collection.remove(remove)
@@ -320,8 +321,9 @@ class OT503Caching(OTCaching):
         # Different algorism with super validate_contract
         # here we will delete al periods not in valid_periods
         valid_periods = []
-        for v_period, v_value in values:
+        for v_period, v_value in values.iteritems():
             error = None
+            error_details = {}
             cached_value = self._get_period_sum(contract, v_period)
             if cached_value == None:
                 error = NO_RESULT_ERROR
@@ -329,29 +331,29 @@ class OT503Caching(OTCaching):
                 # Stored and empowering result missmatch
                 error = WRONG_VALUE_ERROR
                 error_details.update({
-                    'expected': values[cached_period],
+                    'expected': v_value,
                     'cached': cached_value
                 })
-                self._delete_period(contract, v_period)
+                self._delete_month_period(contract, v_period)
             else:
                 # Result is OK
                 # All periods not in this list will be deleted
                 valid_periods.append(v_period)
 
             if error and log_errors:
-                self._insert_error(contract, cached_period, error,
+                self._insert_error(contract, v_period, error,
                                    error_details)
 
         if period and period not in valid_periods:
             # Only checking one period and is invalid
-            self._delete_cached(contract, period)
+            self._delete_month_period(contract, period)
         elif not period:
             # We are checking all contract data
             # must delete all not checked results
             deleteds = self._delete_all_periods_except(contract, valid_periods)
             error = NO_STORED_ERROR
             for deleted in deleteds:
-                self.insert_error(contract, deleted, error)
+                self._insert_error(contract, deleted, error)
         else:
             # Period specified and is valid -> OK nothing to do
             pass
