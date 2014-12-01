@@ -6,7 +6,7 @@ AVALIABLE_ONLINE_TOOLS = ['ot101', 'ot201', 'ot103', 'ot503']
 
 NO_RESULT_ERROR = 'No empowering result'
 NO_STORED_ERROR = 'No stored value to compare with'
-WRONG_VALUE_ERROR = 'Wrong value' 
+WRONG_VALUE_ERROR = 'Wrong value'
 
 class OTCaching(object):
 
@@ -87,7 +87,7 @@ class OTCaching(object):
             # There are still values to be checked
             error = NO_RESULT_ERROR
             self._insert_error(contract, v_period, error)
-    
+
     def error_report(self, ot_code=None, contract=None, period=None,
                      validation_date='today'):
         """
@@ -156,7 +156,7 @@ class OTCaching(object):
             search_params.update({'contract': contract})
 
         self._log_error_collection.remove(search_params)
- 
+
     def _get(self, contract, period=None):
         query = {'contractId': contract}
         if period:
@@ -171,9 +171,9 @@ class OTCaching(object):
         remove_query = {'contractId': contract}
         if period:
             remove_query.update({
-                self._period_key: int(period) 
+                self._period_key: int(period)
             })
-    
+
         self._result_collection.remove(remove_query)
 
     def _is_valid(self, cached, reference):
@@ -229,21 +229,21 @@ class OT503Caching(OTCaching):
         aggregate = [
             {
                 "$match": {
-                    "contractId": contract,  
+                    "contractId": contract,
                     "time": {
                         "$gte": period_start,
                         "$lte": period_end
                     }
-                }  
+                }
             },
             {
                 "$group": {
                     "_id": "$contractId",
-                    "total": { 
-                        $sum: "$consumption"
+                    "total": {
+                        "$sum": "$consumption"
                     }
-                }  
-            }              
+                }
+            }
         ]
         result = self._result_collection.aggregate(aggregate)
         if 'result' in result and 'total' in result['result']:
@@ -273,12 +273,12 @@ class OT503Caching(OTCaching):
         keep_ids = []
         for period in period_list:
             period_start = int(period + 01)
-            period_end = int(period + 31)  
+            period_end = int(period + 31)
             query = {
                 "contractId": contract,
-                "time": {                  
-                    "$gte": period_start,  
-                    "$lte": period_end     
+                "time": {
+                    "$gte": period_start,
+                    "$lte": period_end
                 }
             }
             ids = [x["_id"] for x in self._result_collection.find(query, {"_id": 1})]
@@ -286,9 +286,9 @@ class OT503Caching(OTCaching):
 
         remove = {
             "contractId": contrect,
-            "_id": { '$nin': keep_ids } 
+            "_id": { '$nin': keep_ids }
         }
-    
+
         # Identify them
         invalids_cursor = self._result_collection.find(remove,
                                                        {self._period_key: 1})
