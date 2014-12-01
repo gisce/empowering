@@ -85,3 +85,38 @@ def datestring_to_epoch(date_string):
     else:
         dt = date_string
     return dt.strftime('%s')
+
+def searchparams_to_querystring(search_params):
+    operator_map = {
+        '=': '==',
+        '>=': '>=',
+        '>': '>',
+        '<': '<',
+        '<=': '<=',
+    }
+
+    query = ''
+    for param in search_params:
+        if query:
+            # is not the first
+            query += ' and '
+
+        field = param[0]
+        operator = param[1]
+        value = param[2]
+
+        try:
+            query_operator = operator_map[operator]
+        except KeyError:
+            raise Exception('Unsuported operand "%s"' % operand)
+
+        if type(value) is str:
+            # Add "" to the value
+            query_value = '"%s"' % value
+        else:
+            query_value = '%s' % value
+
+        query += '"%s"%s%s' % (field, query_operator, query_value)
+
+    return query
+
