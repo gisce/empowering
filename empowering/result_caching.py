@@ -8,6 +8,21 @@ NO_RESULT_ERROR = 'No empowering result'
 NO_STORED_ERROR = 'No stored value to compare with'
 WRONG_VALUE_ERROR = 'Wrong value'
 
+"""
+" Useful class to cache the empowering results in a mongo database.
+" Once pull_contract is called the mongo database will create a collection
+" with the empowering resource name (db.ot101, db.ot103...)
+"
+" Also the cached results can be validated comapring with a dict
+" with the correct values using the method validate_contract
+" THis will delete the invalid cached results and fill the
+" collection db.empowering_error with the errors found.
+"
+" Using the function error_report an string is generated
+" using the db.empowering_error to generate a report.
+"""
+
+
 class OTCaching(object):
 
     def __init__(self, empowering_service, empowering_resource,
