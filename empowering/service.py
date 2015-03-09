@@ -123,6 +123,22 @@ class Empowering(base.Resource):
             self.token = auth['token']
         return auth
 
+    def logout(self):
+        if not self.token:
+            return {'success': True}
+        else:
+            endpoint = '{0}/authn/logout'.format(self.apiroot)
+            request = http.Request('GET', endpoint)
+            self.use_json(request)
+            self.add_company_id(request)
+            self.add_cookie_token(request)
+
+            executor = urllib2_executor.base.current_executor()
+            auth = executor(request, parsers.parse_json)
+            if auth.get('success'):
+                self.token = None
+            return auth
+
     @base.resource(AmonMeasures)
     def amon_measures(self):
         return AmonMeasures(self)
