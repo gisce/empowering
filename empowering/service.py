@@ -69,17 +69,22 @@ class Empowering(base.Resource):
     """
     Empowering Insight Engine Service API.
     """
-    def __init__(self, company_id, key_file=None, cert_file=None, version='v1',
-                 debug=False):
+    def __init__(self, company_id, username=None, password=None, key_file=None,
+                 cert_file=None, version='v1', debug=False):
         self.company_id = str(company_id)
         self.key_file = key_file
         self.cert_file = cert_file
-        endpoint = "https://api.empowering.cimne.com"
+        self.version = version
+        self.apiroot = "https://api.empowering.cimne.com"
         if debug:
-            endpoint = "http://91.121.140.152:5111"
-        self.apiroot = '%s/%s' % (endpoint, version)
+            self.apiroot = "https://37.59.27.175"
+        self.token = None
+        if username and password:
+            self.login(username, password)
+
         self.add_filter(self.use_json)
         self.add_filter(self.add_company_id)
+        self.add_filter(self.add_cookie_token)
 
         extra_handlers = ()
         # We have to use SSL Client
@@ -98,8 +103,41 @@ class Empowering(base.Resource):
     def add_company_id(self, request):
         request.headers['X-CompanyId'] = self.company_id
 
+    def add_cookie_token(self, request):
+        if self.token:
+            request.headers['Cookie'] = "iPlanetDirectoryPro=%s" % self.token
+
     def get_url(self):
-        return self.apiroot
+        return "{0}/{1}".format(self.apiroot, self.version)
+
+    def login(self, user, password):
+        if self.token:
+            return {'success': True, 'token': self.token}
+        endpoint = '{0}/authn/login'.format(self.apiroot)
+        params = {'username': user, 'password': password}
+        request = http.Request('POST', endpoint, params)
+        self.use_json(request)
+        executor = urllib2_executor.Urllib2Executor(extra_handlers=())
+        auth = executor(request, parsers.parse_json)
+        if auth.get('success'):
+            self.token = auth['token']
+        return auth
+
+    def logout(self):
+        if not self.token:
+            return {'success': True}
+        else:
+            endpoint = '{0}/authn/logout'.format(self.apiroot)
+            request = http.Request('GET', endpoint)
+            self.use_json(request)
+            self.add_company_id(request)
+            self.add_cookie_token(request)
+
+            executor = urllib2_executor.base.current_executor()
+            auth = executor(request, parsers.parse_json)
+            if auth.get('success'):
+                self.token = None
+            return auth
 
     @base.resource(AmonMeasures)
     def amon_measures(self):
