@@ -47,9 +47,10 @@ class HTTPEmpoweringFilterHandler(urllib2.BaseHandler):
                 url.fragment
             ))
             logger.debug("New url set to %s" % newurl)
-            newr = RequestWithMethod(newurl, request.data, request.headers,
-                                    request.origin_req_host,
-                                    request.unverifiable)
+            newr = urllib2_executor.RequestWithMethod(
+                newurl, request.data, request.headers, request.origin_req_host,
+                request.unverifiable
+            )
             newr.timeout = request.timeout
             newr.set_method(request.get_method())
             return newr
