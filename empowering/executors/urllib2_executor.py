@@ -26,6 +26,9 @@ class HTTPSClientAuthHandler(urllib2.HTTPSHandler):
         return self.do_open(self.getConnection, req)
 
     def getConnection(self, host, timeout=300):
+        logger.debug('using https connection (key file:{} Cert file:{})'.format(
+            self.key_file, self.cert_file
+        ))
         return httplib.HTTPSConnection(host, key_file=self.key_file,
                                        cert_file=self.cert_file)
 
