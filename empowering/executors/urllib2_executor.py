@@ -100,3 +100,11 @@ class HTTPAuthEmpowering(urllib2.BaseHandler):
         req.headers['Cookie'] = "iPlanetDirectoryPro={}".format(auth['token'])
         return self.parent.open(req, timeout=req.timeout)
 
+
+class Urllib2Executor(urllib2_executor.Urllib2Executor):
+    def __init__(self, extra_handlers):
+        self.handlers = extra_handlers
+
+
+def use(extra_handlers=()):
+    base.use_executor(Urllib2Executor(extra_handlers=extra_handlers))
