@@ -12,9 +12,10 @@ from warnings import warn
 
 from libsaas.services import base
 from libsaas import http, parsers
-from libsaas.executors import urllib2_executor
+from libsaas.executors import urllib2_executor as base_executor
+from empowering.executors import urllib2_executor
 from empowering.executors.urllib2_executor import (
-    HTTPSClientAuthHandler, HTTPEmpoweringFilterHandler
+    HTTPSClientAuthHandler, HTTPEmpoweringFilterHandler, HTTPAuthEmpowering,
 )
 from empowering.resource import EmpoweringResource
 from empowering.results import *
@@ -78,22 +79,28 @@ class Empowering(base.Resource):
         self.apiroot = "https://api.empowering.cimne.com"
         if debug:
             self.apiroot = "https://37.59.27.175"
-        self.token = None
-        if username and password:
-            self.login(username, password)
-
+        self.login_handler = None
         self.add_filter(self.use_json)
         self.add_filter(self.add_company_id)
         self.add_filter(self.add_cookie_token)
+        self.setup_executor()
+        if username and password:
+            self.login(username, password)
 
-        extra_handlers = ()
-        # We have to use SSL Client
+    @property
+    def token(self):
+        return self.login_handler.token
+
+    def setup_executor(self, extra_handlers=None):
+        if extra_handlers is None:
+            extra_handlers = ()
+        extra_handlers += (HTTPEmpoweringFilterHandler(), )
         if self.key_file and self.cert_file:
             extra_handlers += (
                 HTTPSClientAuthHandler(self.key_file, self.cert_file),
             )
-        extra_handlers += (HTTPEmpoweringFilterHandler(), )
-        urllib2_executor.use(extra_handlers=extra_handlers)
+
+        urllib2_executor.use(extra_handlers)
 
     def use_json(self, request):
         if request.method.upper() not in http.URLENCODE_METHODS:
@@ -111,16 +118,12 @@ class Empowering(base.Resource):
         return "{0}/{1}".format(self.apiroot, self.version)
 
     def login(self, user, password):
-        if self.token:
+        if self.login_handler and self.token:
             return {'success': True, 'token': self.token}
-        endpoint = '{0}/authn/login'.format(self.apiroot)
-        params = {'username': user, 'password': password}
-        request = http.Request('POST', endpoint, params)
-        self.use_json(request)
-        executor = urllib2_executor.Urllib2Executor(extra_handlers=())
-        auth = executor(request, parsers.parse_json)
-        if auth.get('success'):
-            self.token = auth['token']
+        endpoint = "{}/authn/login".format(self.apiroot)
+        self.login_handler = HTTPAuthEmpowering(user, password, endpoint)
+        auth = self.login_handler.login()
+        self.setup_executor((self.login_handler, ))
         return auth
 
     def logout(self):
@@ -133,10 +136,10 @@ class Empowering(base.Resource):
             self.add_company_id(request)
             self.add_cookie_token(request)
 
-            executor = urllib2_executor.base.current_executor()
+            executor = base_executor.base.current_executor()
             auth = executor(request, parsers.parse_json)
             if auth.get('success'):
-                self.token = None
+                self.login_handler.token = None
             return auth
 
     @base.resource(AmonMeasures)
