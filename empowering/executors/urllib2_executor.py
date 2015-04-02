@@ -1,8 +1,9 @@
 import urllib2
 import httplib
 import logging
+import json
 from urlparse import urlparse, urlunparse
-from libsaas.executors.urllib2_executor import RequestWithMethod
+from libsaas.executors import base, urllib2_executor
 
 
 logger = logging.getLogger('empowering.executors.urllib2_executor')
@@ -52,3 +53,46 @@ class HTTPEmpoweringFilterHandler(urllib2.BaseHandler):
         else:
             return request
     https_request = http_request
+
+
+class HTTPAuthEmpowering(urllib2.BaseHandler):
+
+    def __init__(self, username, password, endpoint):
+        self.username = username
+        self.password = password
+        self.token = None
+        self.endpoint = endpoint
+        self.retried = 0
+        self.max_retries = 1
+
+    def http_error_401(self, req, fp, code, msg, headers):
+        logger.debug("Login required. Retry auth")
+        response = self.retry_auth(req, headers)
+        self.reset_retry_count()
+        return response
+
+    def login(self):
+        data = json.dumps({
+            "username": self.username, "password": self.password
+        })
+        req = urllib2.Request(self.endpoint, data)
+        req.headers['Content-Type'] = 'application/json'
+        response = urllib2.urlopen(req)
+        auth = json.loads(response.read())
+        self.token = auth['token']
+        response.close()
+        return auth
+
+    def reset_retry_count(self):
+        self.retried = 0
+
+    def retry_auth(self, req, headers):
+        if self.retried >= self.max_retries:
+            return urllib2.HTTPError(
+                req.get_full_url(), 401, "Auth failed", headers, None
+            )
+        auth = self.login()
+        self.reset_retry_count()
+        req.headers['Cookie'] = "iPlanetDirectoryPro={}".format(auth['token'])
+        return self.parent.open(req, timeout=req.timeout)
+
