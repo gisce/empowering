@@ -69,13 +69,13 @@ class OT503Results(OTResult):
             end_period = '%s%s%s' % (year, month, last_day)
 
             params = [
-                ('time', '>=', int(start_period)),
-                ('time', '<=', int(end_period)),
+                ('day', '>=', int(start_period)),
+                ('day', '<=', int(end_period)),
             ]
             search_params.extend(params)
 
         query = searchparams_to_querystring(search_params)
-        return self.multiget(where=query, sort='[("time", 1)]',
+        return self.multiget(where=query, sort='[("day", 1)]',
                              max_results=last_day)
 
 
