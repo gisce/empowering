@@ -79,5 +79,9 @@ class OT503Results(OTResult):
                              max_results=last_day)
 
 
+class OT900Results(OTResult):
+    path = 'OT900Results'
+
+
 class BT111Results(OTResult):
     path = 'BT111Results'
