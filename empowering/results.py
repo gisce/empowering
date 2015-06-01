@@ -22,6 +22,7 @@ class OTResult(EmpoweringResource):
         query = searchparams_to_querystring(search_params)
         return self.multiget(where=query)
 
+
 class OT101Results(OTResult):
     path = 'OT101Results'
 
@@ -30,8 +31,16 @@ class OT103Results(OTResult):
     path = 'OT103Results'
 
 
+class OT105Results(OTResult):
+    path = 'OT105Results'
+
+
 class OT106Results(OTResult):
     path = 'OT106Results'
+
+
+class OT109Results(OTResult):
+    path = 'OT109Results'
 
 
 class OT201Results(OTResult):
@@ -40,6 +49,14 @@ class OT201Results(OTResult):
 
 class OT204Results(OTResult):
     path = 'OT204Results'
+
+
+class OT401Results(OTResult):
+    path = 'OT401Results'
+
+
+class OT502Results(OTResult):
+    path = 'OT502Results'
 
 
 class OT503Results(OTResult):
@@ -79,5 +96,17 @@ class OT503Results(OTResult):
                              max_results=last_day)
 
 
-class BT111Results(OTResult):
-    path = 'BT111Results'
+class OT603Results(OTResult):
+    path = 'OT603Results'
+
+
+class OT603gResults(OTResult):
+    path = 'OT603gResults'
+
+
+class OT701Results(OTResult):
+    path = 'OT701Results'
+
+
+class OT703Results(OTResult):
+    path = 'OT703Results'

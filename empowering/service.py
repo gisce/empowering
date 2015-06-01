@@ -78,7 +78,7 @@ class Empowering(base.Resource):
         self.version = version
         self.apiroot = "https://api.empowering.cimne.com"
         if debug:
-            self.apiroot = "https://37.59.27.175"
+            self.apiroot = "https://91.121.140.152"
         self.login_handler = None
         self.add_filter(self.use_json)
         self.add_filter(self.add_company_id)
@@ -89,7 +89,9 @@ class Empowering(base.Resource):
 
     @property
     def token(self):
-        return self.login_handler.token
+        if hasattr(self.login_handler,'token'):
+            return self.login_handler.token
+        return None
 
     def setup_executor(self, extra_handlers=None):
         if extra_handlers is None:
@@ -179,6 +181,14 @@ class Empowering(base.Resource):
     def ot103_results(self):
         return OT103Results(self)
 
+    @base.resource(OT105Results)
+    def ot105_result(self, result_id):
+        return OT105Results(self, result_id)
+
+    @base.resource(OT105Results)
+    def ot105_results(self):
+        return OT105Results(self)
+
     @base.resource(OT106Results)
     def ot106_result(self, result_id):
         return OT106Results(self, result_id)
@@ -186,6 +196,14 @@ class Empowering(base.Resource):
     @base.resource(OT106Results)
     def ot106_results(self):
         return OT106Results(self)
+
+    @base.resource(OT109Results)
+    def ot109_result(self, result_id):
+        return OT109Results(self, result_id)
+
+    @base.resource(OT109Results)
+    def ot109_results(self):
+        return OT109Results(self)
 
     @base.resource(OT201Results)
     def ot201_result(self, result_id):
@@ -203,14 +221,54 @@ class Empowering(base.Resource):
     def ot204_results(self):
         return OT204Results(self)
 
+    @base.resource(OT401Results)
+    def ot401_result(self, result_id):
+        return OT401Results(self, result_id)
+
+    @base.resource(OT401Results)
+    def ot401_results(self):
+        return OT401Results(self)
+
+    @base.resource(OT502Results)
+    def ot502_results(self):
+        return OT502Results(self)
+
+    @base.resource(OT502Results)
+    def ot502_result(self, result_id):
+        return OT502Results(self, result_id)
+
     @base.resource(OT503Results)
     def ot503_results(self):
         return OT503Results(self)
 
-    @base.resource(BT111Results)
-    def bt111_result(self, result_id):
-        return BT111Results(self, result_id)
+    @base.resource(OT603Results)
+    def ot603_results(self):
+        return OT603Results(self)
 
-    @base.resource(BT111Results)
-    def bt111_results(self):
-        return BT111Results(self)
+    @base.resource(OT603Results)
+    def ot603_result(self, result_id):
+        return OT603Results(self, result_id)
+
+    @base.resource(OT603gResults)
+    def ot603g_results(self):
+        return OT603gResults(self)
+
+    @base.resource(OT603gResults)
+    def ot603g_result(self, result_id):
+        return OT603gResults(self, result_id)
+
+    @base.resource(OT701Results)
+    def ot701_result(self, result_id):
+        return OT701Results(self, result_id)
+
+    @base.resource(OT701Results)
+    def ot701_results(self):
+        return OT701Results(self)
+
+    @base.resource(OT703Results)
+    def ot703_result(self, result_id):
+        return OT703Results(self, result_id)
+
+    @base.resource(OT703Results)
+    def ot703_results(self):
+        return OT703Results(self)
