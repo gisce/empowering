@@ -78,7 +78,7 @@ class Empowering(base.Resource):
         self.version = version
         self.apiroot = "https://api.empowering.cimne.com"
         if debug:
-            self.apiroot = "https://37.59.27.175"
+            self.apiroot = "https://91.121.140.152"
         self.login_handler = None
         self.add_filter(self.use_json)
         self.add_filter(self.add_company_id)
