@@ -89,7 +89,7 @@ class Empowering(base.Resource):
 
     @property
     def token(self):
-        return self.login_handler.token
+        return self.login_handler and self.login_handler.token
 
     def setup_executor(self, extra_handlers=None):
         if extra_handlers is None:
