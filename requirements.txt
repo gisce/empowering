@@ -1,6 +1,4 @@
-ooop
 times
 libsaas
-Flask
-marshmallow
 arrow
+marshmallow>=2.0.0b2

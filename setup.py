@@ -16,7 +16,9 @@ tests_require = [
 
 install_requires = [
     'libsaas',
-    'marshmallow'
+    'marshmallow>=2.0.0b2',
+    'times',
+    'arrow'
 ]
 
 setup(
