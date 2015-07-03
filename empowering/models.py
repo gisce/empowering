@@ -24,13 +24,28 @@ class CustomerBuildingData(Schema):
     dwellingArea = Integer()
     buildingVolume = Integer()
     buildingType = fields.Select(['Single_house', 'Apartment'])
-    dwellingPositionInBuilding = fields.Select(['first_floor', 'middle_floor', 'last_floor', 'other'])
-    dwellingOrientation = fields.Select(['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'])
-    buildingWindowsType = fields.Select(['single_panel', 'double_panel', 'triple_panel', 'low_emittance', 'other'])
-    buildingWindowsFrame = fields.Select(['PVC', 'wood', 'aluminium', 'steel', 'other'])
-    buildingHeatingSource = fields.Select(['electricity', 'gas', 'gasoil', 'district_heating', 'biomass', 'other'])
-    buildingHeatingSourceDhw = fields.Select(['electricity', 'gas', 'gasoil', 'district_heating', 'biomass', 'other'])
-    buildingSolarSystem = fields.Select(['PV', 'solar_thermal_heating', 'solar_thermal_DHW', 'other', 'not_installed'])
+    dwellingPositionInBuilding = fields.Select([
+        'first_floor', 'middle_floor', 'last_floor', 'other'
+    ])
+    dwellingOrientation = fields.Select([
+        'S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'
+    ])
+    buildingWindowsType = fields.Select([
+        'single_panel', 'double_panel', 'triple_panel', 'low_emittance', 'other'
+    ])
+    buildingWindowsFrame = fields.Select([
+        'PVC', 'wood', 'aluminium', 'steel', 'other'
+    ])
+    buildingHeatingSource = fields.Select([
+        'electricity', 'gas', 'gasoil', 'district_heating', 'biomass', 'other'
+    ])
+    buildingHeatingSourceDhw = fields.Select([
+        'electricity', 'gas', 'gasoil', 'district_heating', 'biomass', 'other'
+    ])
+    buildingSolarSystem = fields.Select([
+        'PV', 'solar_thermal_heating', 'solar_thermal_DHW', 'other',
+        'not_installed'
+    ])
 
 
 class CustomerProfileEducationLevel(Schema):
@@ -75,8 +90,12 @@ class Customer(Schema):
     address = fields.Nested(CustomerAddress)
     buildingData = fields.Nested(CustomerBuildingData)
     profile = fields.Nested(CustomerProfile)
-    customisedGroupingCriteria = fields.Nested(CustomerCustomisedGroupingCriteria)
-    customisedServiceParameters = fields.Nested(CustomerCustomisedServiceParameters)
+    customisedGroupingCriteria = fields.Nested(
+        CustomerCustomisedGroupingCriteria
+    )
+    customisedServiceParameters = fields.Nested(
+        CustomerCustomisedServiceParameters
+    )
 
 
 class Device(Schema):
@@ -107,9 +126,12 @@ class Contract(Schema):
 
 
 class Reading(Schema):
-    type = fields.Select(['electricityConsumption', 'electricityKiloVoltAmpHours', 'heatConsumption', 'gasConsumption',
-                          'estimatedElectricityConsumption', 'estimatedElectricityKiloVoltAmpHours',
-                          'estimatedHeatConsumption', 'estimatedGasConsumption'])
+    type = fields.Select([
+        'electricityConsumption', 'electricityKiloVoltAmpHours',
+        'heatConsumption', 'gasConsumption', 'estimatedElectricityConsumption',
+        'estimatedElectricityKiloVoltAmpHours', 'estimatedHeatConsumption',
+        'estimatedGasConsumption'
+    ])
     unit = fields.Select(['kWh', 'Wh'])
     period = fields.Select(['INSTANT', 'CUMULATIVE', 'PULSE'])
 
