@@ -1,7 +1,12 @@
-from marshmallow import Serializer, fields
+from marshmallow import Schema, fields
 
 
-class CustomerAddress(Serializer):
+class Integer(fields.Integer):
+    def __init__(self, default=None, **kwargs):
+        super(Integer, self).__init__(default=default, **kwargs)
+
+
+class CustomerAddress(Schema):
     buildingId = fields.UUID()
     city = fields.String()
     cityCode = fields.String()
@@ -10,64 +15,69 @@ class CustomerAddress(Serializer):
     postalCode = fields.String()
 
 
-class CustomerProfileEducationLevel(Serializer):
-    edu_prim = fields.Integer()
-    edu_sec = fields.Integer()
-    edu_uni = fields.Integer()
-    edu_noStudies = fields.Integer()
+class CustomerProfileEducationLevel(Schema):
+    edu_prim = Integer()
+    edu_sec = Integer()
+    edu_uni = Integer()
+    edu_noStudies = Integer()
 
 
-class CustomerProfile(Serializer):
-    totalPersonNumber = fields.Integer()
-    minorsPersonsNumber = fields.Integer()
-    workingAgePersonsNumber = fields.Integer()
-    retiredAgePersonsNumber = fields.Integer()
-    malePersonsNumber = fields.Integer()
-    femalePersonsNumber = fields.Integer()
+class CustomerProfile(Schema):
+    totalPersonNumber = Integer()
+    minorsPersonsNumber = Integer()
+    workingAgePersonsNumber = Integer()
+    retiredAgePersonsNumber = Integer()
+    malePersonsNumber = Integer()
+    femalePersonsNumber = Integer()
     educationLevel = fields.Nested(CustomerProfileEducationLevel)
 
 
-class Customer(Serializer):
+class Customer(Schema):
     customerId = fields.UUID()
     address = fields.Nested(CustomerAddress)
     profile = fields.Nested(CustomerProfile)
 
 
-class Device(Serializer):
+class Device(Schema):
     dateStart = fields.DateTime(format='iso')
     dateEnd = fields.DateTime(format='iso')
     deviceId = fields.UUID()
 
 
-class Contract(Serializer):
-    payerId = fields.UUID()
+class Contract(Schema):
+    contractId = fields.String()
     ownerId = fields.UUID()
+    payerId = fields.UUID()
     signerId = fields.UUID()
+    power = Integer()
     dateStart = fields.DateTime(format='iso')
     dateEnd = fields.DateTime(format='iso')
-    contractId = fields.String()
+    weatherStationId = fields.String()
+    activeUser = fields.Bool()
+    activeUserDate = fields.Bool()
+    experimentalGroupUser = fields.Bool()
+    experimentalGroupUserTest = fields.Bool()
+    customer = fields.Nested(Customer)
     tariffId = fields.String()
-    power = fields.Integer()
-    version = fields.Integer()
+    version = Integer()
     activityCode = fields.String()
     meteringPointId = fields.UUID()
-    customer = fields.Nested(Customer)
     devices = fields.List(fields.Nested(Device))
 
 
-class Reading(Serializer):
+class Reading(Schema):
     type = fields.Select(['electricityConsumption'])
     unit = fields.Select(['kWh', 'Wh'])
     period = fields.Select(['INSTANT', 'CUMULATIVE', 'PULSE'])
 
 
-class Measurement(Serializer):
+class Measurement(Schema):
     type = fields.Select(['electricityConsumption'])
     timestamp = fields.DateTime(format='iso')
     value = fields.Float()
 
 
-class AmonMeasure(Serializer):
+class AmonMeasure(Schema):
     deviceId = fields.UUID()
     meteringPointId = fields.UUID()
     readings = fields.List(fields.Nested(Reading))
