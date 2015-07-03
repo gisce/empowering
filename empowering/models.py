@@ -20,9 +20,9 @@ class CustomerAddress(Schema):
 
 
 class CustomerBuildingData(Schema):
-    buildingConstructionYear = fields.Integer()
-    dwellingArea = fields.Integer()
-    buildingVolume = fields.Integer()
+    buildingConstructionYear = Integer()
+    dwellingArea = Integer()
+    buildingVolume = Integer()
     buildingType = fields.Select(['Single_house', 'Apartment'])
     dwellingPositionInBuilding = fields.Select(['first_floor', 'middle_floor', 'last_floor', 'other'])
     dwellingOrientation = fields.Select(['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'])
@@ -34,19 +34,19 @@ class CustomerBuildingData(Schema):
 
 
 class CustomerProfileEducationLevel(Schema):
-    edu_prim = fields.Integer()
-    edu_sec = fields.Integer()
-    edu_uni = fields.Integer()
-    edu_noStudies = fields.Integer()
+    edu_prim = Integer()
+    edu_sec = Integer()
+    edu_uni = Integer()
+    edu_noStudies = Integer()
 
 
 class CustomerProfile(Schema):
-    totalPersonNumber = fields.Integer()
-    minorsPersonsNumber = fields.Integer()
-    workingAgePersonsNumber = fields.Integer()
-    retiredAgePersonsNumber = fields.Integer()
-    malePersonsNumber = fields.Integer()
-    femalePersonsNumber = fields.Integer()
+    totalPersonNumber = Integer()
+    minorsPersonsNumber = Integer()
+    workingAgePersonsNumber = Integer()
+    retiredAgePersonsNumber = Integer()
+    malePersonsNumber = Integer()
+    femalePersonsNumber = Integer()
     educationLevel = fields.Nested(CustomerProfileEducationLevel)
 
 class CustomerCustomisedGroupingCriteria(Schema):
@@ -94,7 +94,7 @@ class Contract(Schema):
     dateEnd = fields.DateTime(format='iso')
     contractId = fields.String()
     tariffId = fields.String()
-    version = fields.Integer()
+    version = Integer()
     activityCode = fields.String()
     meteringPointId = fields.UUID()
     weatherStationId = fields.UUID()
