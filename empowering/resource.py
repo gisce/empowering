@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from urlparse import urlparse, parse_qs
 
 from libsaas.services import base
 from libsaas import http, parsers
@@ -45,7 +46,8 @@ class EmpoweringResource(base.RESTResource):
                 all_results['_items'].extend(result['_items'])
 
             if 'next' in result['_links']:
-                page = result['_links']['next']['href'].split("&page=")[1]
+                qs = urlparse(result['_links']['next']['href']).query
+                page = parse_qs(qs).get('page', ['0'])[0]
                 more_items = True
         return all_results
 
