@@ -20,40 +20,55 @@ class CustomerAddress(Schema):
 
 
 class CustomerBuildingData(Schema):
-    buildingConstructionYear = fields.Integer()
-    dwellingArea = fields.Integer()
-    buildingVolume = fields.Integer()
+    buildingConstructionYear = Integer()
+    dwellingArea = Integer()
+    buildingVolume = Integer()
     buildingType = fields.Select(['Single_house', 'Apartment'])
-    dwellingPositionInBuilding = fields.Select(['first_floor', 'middle_floor', 'last_floor', 'other'])
-    dwellingOrientation = fields.Select(['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'])
-    buildingWindowsType = fields.Select(['single_panel', 'double_panel', 'triple_panel', 'low_emittance', 'other'])
-    buildingWindowsFrame = fields.Select(['PVC', 'wood', 'aluminium', 'steel', 'other'])
-    buildingHeatingSource = fields.Select(['electricity', 'gas', 'gasoil', 'district_heating', 'biomass', 'other'])
-    buildingHeatingSourceDhw = fields.Select(['electricity', 'gas', 'gasoil', 'district_heating', 'biomass', 'other'])
-    buildingSolarSystem = fields.Select(['PV', 'solar_thermal_heating', 'solar_thermal_DHW', 'other', 'not_installed'])
+    dwellingPositionInBuilding = fields.Select([
+        'first_floor', 'middle_floor', 'last_floor', 'other'
+    ])
+    dwellingOrientation = fields.Select([
+        'S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'
+    ])
+    buildingWindowsType = fields.Select([
+        'single_panel', 'double_panel', 'triple_panel', 'low_emittance', 'other'
+    ])
+    buildingWindowsFrame = fields.Select([
+        'PVC', 'wood', 'aluminium', 'steel', 'other'
+    ])
+    buildingHeatingSource = fields.Select([
+        'electricity', 'gas', 'gasoil', 'district_heating', 'biomass', 'other'
+    ])
+    buildingHeatingSourceDhw = fields.Select([
+        'electricity', 'gas', 'gasoil', 'district_heating', 'biomass', 'other'
+    ])
+    buildingSolarSystem = fields.Select([
+        'PV', 'solar_thermal_heating', 'solar_thermal_DHW', 'other',
+        'not_installed'
+    ])
 
 
 class CustomerProfileEducationLevel(Schema):
-    edu_prim = fields.Integer()
-    edu_sec = fields.Integer()
-    edu_uni = fields.Integer()
-    edu_noStudies = fields.Integer()
+    edu_prim = Integer()
+    edu_sec = Integer()
+    edu_uni = Integer()
+    edu_noStudies = Integer()
 
 
 class CustomerProfile(Schema):
-    totalPersonNumber = fields.Integer()
-    minorsPersonsNumber = fields.Integer()
-    workingAgePersonsNumber = fields.Integer()
-    retiredAgePersonsNumber = fields.Integer()
-    malePersonsNumber = fields.Integer()
-    femalePersonsNumber = fields.Integer()
+    totalPersonNumber = Integer()
+    minorsPersonsNumber = Integer()
+    workingAgePersonsNumber = Integer()
+    retiredAgePersonsNumber = Integer()
+    malePersonsNumber = Integer()
+    femalePersonsNumber = Integer()
     educationLevel = fields.Nested(CustomerProfileEducationLevel)
 
-class CustomerCustomisedGroupingCriteria(Serializer):
+class CustomerCustomisedGroupingCriteria(Schema):
     pass
 
 
-class CustomerCustomisedServiceParameters(Serializer):
+class CustomerCustomisedServiceParameters(Schema):
     OT101 = fields.String()
     OT103 = fields.String()
     OT105 = fields.String()
@@ -75,8 +90,12 @@ class Customer(Schema):
     address = fields.Nested(CustomerAddress)
     buildingData = fields.Nested(CustomerBuildingData)
     profile = fields.Nested(CustomerProfile)
-    customisedGroupingCriteria = fields.Nested(CustomerCustomisedGroupingCriteria)
-    customisedServiceParameters = fields.Nested(CustomerCustomisedServiceParameters)
+    customisedGroupingCriteria = fields.Nested(
+        CustomerCustomisedGroupingCriteria
+    )
+    customisedServiceParameters = fields.Nested(
+        CustomerCustomisedServiceParameters
+    )
 
 
 class Device(Schema):
@@ -85,7 +104,7 @@ class Device(Schema):
     deviceId = fields.UUID()
 
 
-class Contract(Serializer):
+class Contract(Schema):
     payerId = fields.UUID()
     ownerId = fields.UUID()
     signerId = fields.UUID()
@@ -94,7 +113,7 @@ class Contract(Serializer):
     dateEnd = fields.DateTime(format='iso')
     contractId = fields.String()
     tariffId = fields.String()
-    version = fields.Integer()
+    version = Integer()
     activityCode = fields.String()
     meteringPointId = fields.UUID()
     weatherStationId = fields.UUID()
@@ -107,9 +126,12 @@ class Contract(Serializer):
 
 
 class Reading(Schema):
-    type = fields.Select(['electricityConsumption', 'electricityKiloVoltAmpHours', 'heatConsumption', 'gasConsumption',
-                          'estimatedElectricityConsumption', 'estimatedElectricityKiloVoltAmpHours',
-                          'estimatedHeatConsumption', 'estimatedGasConsumption'])
+    type = fields.Select([
+        'electricityConsumption', 'electricityKiloVoltAmpHours',
+        'heatConsumption', 'gasConsumption', 'estimatedElectricityConsumption',
+        'estimatedElectricityKiloVoltAmpHours', 'estimatedHeatConsumption',
+        'estimatedGasConsumption'
+    ])
     unit = fields.Select(['kWh', 'Wh'])
     period = fields.Select(['INSTANT', 'CUMULATIVE', 'PULSE'])
 
