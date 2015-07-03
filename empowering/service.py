@@ -19,10 +19,15 @@ from empowering.executors.urllib2_executor import (
 )
 from empowering.resource import EmpoweringResource
 from empowering.results import *
+from empowering import models
 
 
 class Contracts(EmpoweringResource):
     path = 'contracts'
+
+    def wrap_object(self, obj):
+        serializer = models.Contract()
+        return serializer.dump(obj).data
 
 
 class AmonMeasures(EmpoweringResource):
@@ -89,9 +94,7 @@ class Empowering(base.Resource):
 
     @property
     def token(self):
-        if hasattr(self.login_handler,'token'):
-            return self.login_handler.token
-        return None
+        return self.login_handler and self.login_handler.token
 
     def setup_executor(self, extra_handlers=None):
         if extra_handlers is None:
@@ -244,6 +247,18 @@ class Empowering(base.Resource):
     @base.resource(OT603Results)
     def ot603_results(self):
         return OT603Results(self)
+
+    @base.resource(OT900Results)
+    def ot900_results(self):
+        return OT900Results(self)
+
+    @base.resource(BT111Results)
+    def bt111_result(self, result_id):
+        return BT111Results(self, result_id)
+
+    @base.resource(BT111Results)
+    def bt111_results(self):
+        return BT111Results(self)
 
     @base.resource(OT603Results)
     def ot603_result(self, result_id):

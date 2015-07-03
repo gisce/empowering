@@ -100,6 +100,14 @@ class OT603Results(OTResult):
     path = 'OT603Results'
 
 
+class OT900Results(OTResult):
+    path = 'OT900Results'
+
+
+class BT111Results(OTResult):
+    path = 'BT111Results'
+
+
 class OT603gResults(OTResult):
     path = 'OT603gResults'
 

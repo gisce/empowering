@@ -16,12 +16,14 @@ tests_require = [
 
 install_requires = [
     'libsaas',
-    'marshmallow'
+    'marshmallow>=2.0.0b2',
+    'times',
+    'arrow'
 ]
 
 setup(
     name='empowering',
-    version='0.12.0',
+    version='0.14.0',
     author='GISCE-TI, S.L.',
     author_email='devel@gisce.net',
     url='http://code.gisce.net/empowering',
