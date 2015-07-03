@@ -49,11 +49,11 @@ class CustomerProfile(Schema):
     femalePersonsNumber = fields.Integer()
     educationLevel = fields.Nested(CustomerProfileEducationLevel)
 
-class CustomerCustomisedGroupingCriteria(Serializer):
+class CustomerCustomisedGroupingCriteria(Schema):
     pass
 
 
-class CustomerCustomisedServiceParameters(Serializer):
+class CustomerCustomisedServiceParameters(Schema):
     OT101 = fields.String()
     OT103 = fields.String()
     OT105 = fields.String()
@@ -85,7 +85,7 @@ class Device(Schema):
     deviceId = fields.UUID()
 
 
-class Contract(Serializer):
+class Contract(Schema):
     payerId = fields.UUID()
     ownerId = fields.UUID()
     signerId = fields.UUID()
