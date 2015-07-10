@@ -107,8 +107,8 @@ class Customer(Schema):
 
 
 class Device(Schema):
-    dateStart = fields.StringDateTime(format='iso')
-    dateEnd = fields.StringDateTime(format='iso')
+    dateStart = StringDateTime(format='iso')
+    dateEnd = StringDateTime(format='iso')
     deviceId = fields.UUID()
 
 
@@ -117,8 +117,8 @@ class Contract(Schema):
     ownerId = fields.UUID()
     signerId = fields.UUID()
     power = Integer()
-    dateStart = fields.StringDateTime(format='iso')
-    dateEnd = fields.StringDateTime(format='iso')
+    dateStart = StringDateTime(format='iso')
+    dateEnd = StringDateTime(format='iso')
     contractId = fields.String()
     tariffId = fields.String()
     version = Integer()
@@ -128,7 +128,7 @@ class Contract(Schema):
     experimentalGroupUser = fields.Boolean()
     experimentalGroupUserTest = fields.Boolean()
     activeUser = fields.Boolean()
-    activeUserDate = fields.StringDateTime(format='iso')
+    activeUserDate = StringDateTime(format='iso')
     customer = fields.Nested(Customer)
     devices = fields.List(fields.Nested(Device))
 
@@ -146,7 +146,7 @@ class Reading(Schema):
 
 class Measurement(Schema):
     type = fields.Select(['electricityConsumption'])
-    timestamp = fields.StringDateTime(format='iso')
+    timestamp = StringDateTime(format='iso')
     value = fields.Float()
 
 
