@@ -6,6 +6,14 @@ class Integer(fields.Integer):
         super(Integer, self).__init__(default=default, **kwargs)
 
 
+class StringDateTime(fields.DateTime):
+    def _serialize(self, value, attr, obj):
+        if isinstance(value, basestring):
+            return value
+        else:
+            return super(StringDateTime, self)._serialize(value, attr, obj)
+
+
 class CustomerAddress(Schema):
     buildingId = fields.UUID()
     country = fields.String()
@@ -99,8 +107,8 @@ class Customer(Schema):
 
 
 class Device(Schema):
-    dateStart = fields.DateTime(format='iso')
-    dateEnd = fields.DateTime(format='iso')
+    dateStart = fields.StringDateTime(format='iso')
+    dateEnd = fields.StringDateTime(format='iso')
     deviceId = fields.UUID()
 
 
@@ -109,8 +117,8 @@ class Contract(Schema):
     ownerId = fields.UUID()
     signerId = fields.UUID()
     power = Integer()
-    dateStart = fields.DateTime(format='iso')
-    dateEnd = fields.DateTime(format='iso')
+    dateStart = fields.StringDateTime(format='iso')
+    dateEnd = fields.StringDateTime(format='iso')
     contractId = fields.String()
     tariffId = fields.String()
     version = Integer()
@@ -120,7 +128,7 @@ class Contract(Schema):
     experimentalGroupUser = fields.Boolean()
     experimentalGroupUserTest = fields.Boolean()
     activeUser = fields.Boolean()
-    activeUserDate = fields.DateTime(format='iso')
+    activeUserDate = fields.StringDateTime(format='iso')
     customer = fields.Nested(Customer)
     devices = fields.List(fields.Nested(Device))
 
@@ -138,7 +146,7 @@ class Reading(Schema):
 
 class Measurement(Schema):
     type = fields.Select(['electricityConsumption'])
-    timestamp = fields.DateTime(format='iso')
+    timestamp = fields.StringDateTime(format='iso')
     value = fields.Float()
 
 
