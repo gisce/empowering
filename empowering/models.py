@@ -120,3 +120,19 @@ class AmonMeasure(Serializer):
     meteringPointId = fields.UUID()
     readings = fields.List(fields.Nested(Reading))
     measurements = fields.List(fields.Nested(Measurement))
+
+
+class HourlyDiscriminationMeasurement(Serializer):
+    type = fields.Select(['electricityConsumption'])
+    timestamp = fields.DateTime(format='iso')
+    p1 = fields.Float()
+    p2 = fields.Float()
+    p3 = fields.Float()
+
+
+class HourlyDiscriminationAmonMeasure(Serializer):
+    deviceId = fields.UUID()
+    meteringPointId = fields.UUID()
+    readings = fields.List(fields.Nested(Reading))
+    measurements = fields.List(fields.Nested(HourlyDiscriminationMeasurement))
+

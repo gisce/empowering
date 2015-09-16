@@ -41,6 +41,22 @@ class AmonMeasures(EmpoweringResource):
         raise base.MethodNotSupported
 
 
+class HourlyDiscriminationAmonMeasures(EmpoweringResource):
+    path = 'residential_timeofuse_amon_measures'
+
+    @base.apimethod
+    def get(self):
+        raise base.MethodNotSupported
+
+    @base.apimethod
+    def update(self, obj, etag):
+        raise base.MethodNotSupported
+
+    @base.apimethod
+    def delete(self, obj, etag):
+        raise base.MethodNotSupported
+
+
 class AmonMeasuresMeasurements(EmpoweringResource):
     path = 'amon_measures_measurements'
 
@@ -152,6 +168,10 @@ class Empowering(base.Resource):
     def measures(self):
         warn('Deprecated. Use amon_measures_measurements', DeprecationWarning)
         return Measures(self)
+
+    @base.resource(HourlyDiscriminationAmonMeasures)
+    def hourly_discrimination_amon_measures(self):
+        return HourlyDiscriminationAmonMeasures(self)
 
     @base.resource(AmonMeasuresMeasurements)
     def amon_measures_measurements(self):
