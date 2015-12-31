@@ -41,6 +41,22 @@ class AmonMeasures(EmpoweringResource):
         raise base.MethodNotSupported
 
 
+class ResidentialTimeofuseAmonMeasures(EmpoweringResource):
+    path = 'residential_timeofuse_amon_measures'
+
+    @base.apimethod
+    def get(self):
+        raise base.MethodNotSupported
+
+    @base.apimethod
+    def update(self, obj, etag):
+        raise base.MethodNotSupported
+
+    @base.apimethod
+    def delete(self, obj, etag):
+        raise base.MethodNotSupported
+
+
 class AmonMeasuresMeasurements(EmpoweringResource):
     path = 'amon_measures_measurements'
 
@@ -89,7 +105,9 @@ class Empowering(base.Resource):
 
     @property
     def token(self):
-        return self.login_handler and self.login_handler.token
+        if hasattr(self.login_handler,'token'):
+            return self.login_handler.token
+        return None
 
     def setup_executor(self, extra_handlers=None):
         if extra_handlers is None:
@@ -151,6 +169,10 @@ class Empowering(base.Resource):
         warn('Deprecated. Use amon_measures_measurements', DeprecationWarning)
         return Measures(self)
 
+    @base.resource(ResidentialTimeofuseAmonMeasures)
+    def residential_timeofuse_amon_measures(self):
+        return ResidentialTimeofuseAmonMeasures(self)
+
     @base.resource(AmonMeasuresMeasurements)
     def amon_measures_measurements(self):
         return AmonMeasuresMeasurements(self)
@@ -179,6 +201,14 @@ class Empowering(base.Resource):
     def ot103_results(self):
         return OT103Results(self)
 
+    @base.resource(OT105Results)
+    def ot105_result(self, result_id):
+        return OT105Results(self, result_id)
+
+    @base.resource(OT105Results)
+    def ot105_results(self):
+        return OT105Results(self)
+
     @base.resource(OT106Results)
     def ot106_result(self, result_id):
         return OT106Results(self, result_id)
@@ -186,6 +216,14 @@ class Empowering(base.Resource):
     @base.resource(OT106Results)
     def ot106_results(self):
         return OT106Results(self)
+
+    @base.resource(OT109Results)
+    def ot109_result(self, result_id):
+        return OT109Results(self, result_id)
+
+    @base.resource(OT109Results)
+    def ot109_results(self):
+        return OT109Results(self)
 
     @base.resource(OT201Results)
     def ot201_result(self, result_id):
@@ -203,6 +241,22 @@ class Empowering(base.Resource):
     def ot204_results(self):
         return OT204Results(self)
 
+    @base.resource(OT401Results)
+    def ot401_result(self, result_id):
+        return OT401Results(self, result_id)
+
+    @base.resource(OT401Results)
+    def ot401_results(self):
+        return OT401Results(self)
+
+    @base.resource(OT502Results)
+    def ot502_results(self):
+        return OT502Results(self)
+
+    @base.resource(OT502Results)
+    def ot502_result(self, result_id):
+        return OT502Results(self, result_id)
+
     @base.resource(OT503Results)
     def ot503_results(self):
         return OT503Results(self)
@@ -218,3 +272,35 @@ class Empowering(base.Resource):
     @base.resource(BT111Results)
     def bt111_results(self):
         return BT111Results(self)
+
+    @base.resource(OT603Results)
+    def ot603_results(self):
+        return OT603Results(self)
+
+    @base.resource(OT603Results)
+    def ot603_result(self, result_id):
+        return OT603Results(self, result_id)
+
+    @base.resource(OT603gResults)
+    def ot603g_results(self):
+        return OT603gResults(self)
+
+    @base.resource(OT603gResults)
+    def ot603g_result(self, result_id):
+        return OT603gResults(self, result_id)
+
+    @base.resource(OT701Results)
+    def ot701_result(self, result_id):
+        return OT701Results(self, result_id)
+
+    @base.resource(OT701Results)
+    def ot701_results(self):
+        return OT701Results(self)
+
+    @base.resource(OT703Results)
+    def ot703_result(self, result_id):
+        return OT703Results(self, result_id)
+
+    @base.resource(OT703Results)
+    def ot703_results(self):
+        return OT703Results(self)

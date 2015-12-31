@@ -24,6 +24,21 @@ def remove_none(struct, context=None):
     return converted
 
 
+def null_to_none(struct, context=None):
+    if not context:
+        context = {}
+    if 'xmlrpc' in context:
+        return struct
+    converted = struct.copy()
+    for key, value in struct.items():
+        if isinstance(value, dict):
+            converted[key] = null_to_none(value)
+        else:
+            if isinstance(value, str) and not value:
+                converted[key] = None
+    return converted
+
+
 def false_to_none(struct, context=None):
     if not context:
         context = {}
@@ -96,6 +111,7 @@ def searchparams_to_querystring(search_params):
     }
 
     query = ''
+    query = ''
     for param in search_params:
         if query:
             # is not the first
@@ -110,7 +126,7 @@ def searchparams_to_querystring(search_params):
         except KeyError:
             raise Exception('Unsuported operand "%s"' % operand)
 
-        if type(value) is str:
+        if type(value) in [str,unicode]:
             # Add "" to the value
             query_value = '"%s"' % value
         else:
