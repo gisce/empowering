@@ -4,8 +4,6 @@ try:
 except Exception, e:
     VERSION = 'unknown'
 
-import sys
-
 from service import Empowering
 from utils import fix_ssl_verify
 
