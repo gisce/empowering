@@ -45,7 +45,7 @@ class EmpoweringResource(base.RESTResource):
                 all_results['_items'].extend(result['_items'])
 
             if 'next' in result['_links']:
-                page = result['_links']['next']['href'].split("&page=")[1]
+                page = result['_links']['next']['href'].split("page=")[1]
                 more_items = True
         return all_results
 
