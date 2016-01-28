@@ -2,5 +2,5 @@ ooop
 times
 libsaas
 Flask
-marshmallow
+marshmallow==2.0.0b2
 arrow
