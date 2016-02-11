@@ -19,6 +19,7 @@ from empowering.executors.urllib2_executor import (
 )
 from empowering.resource import EmpoweringResource
 from empowering.results import *
+from empowering.status import *
 
 
 class Contracts(EmpoweringResource):
@@ -304,3 +305,12 @@ class Empowering(base.Resource):
     @base.resource(OT703Results)
     def ot703_results(self):
         return OT703Results(self)
+
+    @base.resource(OTStatus)
+    def ot_status(self, result_id):
+        return OTStatus(self, result_id)
+
+    @base.resource(OTStatus)
+    def ot_statuses(self):
+        return OTStatus(self)
+
