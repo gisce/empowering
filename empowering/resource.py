@@ -26,7 +26,7 @@ class EmpoweringResource(base.RESTResource):
 
         return request, parsers.parse_json
 
-    def multiget(self, where=None, sort=None, max_results=None):
+    def multiget(self, where=None, sort=None, max_results=200):
         query = where
         if max_results:
             query += '&max_results=%d' % max_results
