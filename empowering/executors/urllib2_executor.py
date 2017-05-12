@@ -1,3 +1,4 @@
+import sys
 import urllib2
 import httplib
 import logging
@@ -29,7 +30,6 @@ class HTTPSClientAuthHandler(urllib2.HTTPSHandler):
             self.key_file, self.cert_file
         ))
 
-        import sys
         ctx = {}
         # NOTE: Backwards compatibility issue, urllib2 <2.7.9
         # no certificate verification was done, by default. Force null
@@ -92,7 +92,17 @@ class HTTPAuthEmpowering(urllib2.BaseHandler):
         })
         req = urllib2.Request(self.endpoint, data)
         req.headers['Content-Type'] = 'application/json'
-        response = urllib2.urlopen(req)
+
+        # NOTE: Backwards compatibility issue, urllib2 <2.7.9
+        # no certificate verification was done, by default. Force null
+        # verification in newer lib versions
+        if sys.version_info >= (2,7,9):
+            # Force null certificate verification
+            import ssl
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+        response = urllib2.urlopen(req, context=ctx)
         auth = json.loads(response.read())
         self.token = auth['token']
         response.close()
