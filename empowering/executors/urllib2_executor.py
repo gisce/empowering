@@ -5,7 +5,6 @@ import json
 from urlparse import urlparse, urlunparse
 from libsaas.executors import base, urllib2_executor
 
-
 logger = logging.getLogger('empowering.executors.urllib2_executor')
 
 
@@ -29,8 +28,20 @@ class HTTPSClientAuthHandler(urllib2.HTTPSHandler):
         logger.debug('using https connection (key file:{} Cert file:{})'.format(
             self.key_file, self.cert_file
         ))
+
+        import sys
+        ctx = {}
+        # NOTE: Backwards compatibility issue, urllib2 <2.7.9
+        # no certificate verification was done, by default. Force null
+        # verification in newer lib versions
+        if sys.version_info >= (2,7,9):
+            # Force null certificate verification
+            import ssl
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
         return httplib.HTTPSConnection(host, key_file=self.key_file,
-                                       cert_file=self.cert_file)
+                                       cert_file=self.cert_file,context=ctx)
 
 
 class HTTPEmpoweringFilterHandler(urllib2.BaseHandler):
