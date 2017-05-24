@@ -16,6 +16,7 @@ from libsaas.executors import urllib2_executor as base_executor
 from empowering.executors import urllib2_executor
 from empowering.executors.urllib2_executor import (
     HTTPSClientAuthHandler, HTTPEmpoweringFilterHandler, HTTPAuthEmpowering,
+    API_HOST, DEBUG_API_HOST
 )
 from empowering.resource import EmpoweringResource
 from empowering.results import *
@@ -81,9 +82,9 @@ class Empowering(base.Resource):
         self.key_file = key_file
         self.cert_file = cert_file
         self.version = version
-        self.apiroot = "https://api.empowering.cimne.com"
+        self.apiroot = "https://{0}".format(API_HOST)
         if debug:
-            self.apiroot = "https://91.121.140.152"
+            self.apiroot = "https://{0}".format(DEBUG_API_HOST)
         self.login_handler = None
         self.add_filter(self.use_json)
         self.add_filter(self.add_company_id)
