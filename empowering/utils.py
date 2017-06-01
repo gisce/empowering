@@ -1,12 +1,27 @@
 from datetime import datetime
+import logging
 import uuid
 import times
+import ssl
 from arrow.parser import DateTimeParser
 
 
 # Monkey patch parse function for times library (newer)
 parser = DateTimeParser()
 times.parse = parser.parse_iso
+
+
+def fix_ssl_verify():
+    logger = logging.getLogger('{0}.fix_ssl_verify'.format(__name__))
+    try:
+        _create_unverified_https_context = ssl._create_unverified_context
+    except AttributeError:
+        # Legacy Python that doesn't verify HTTPS certificates by default
+        pass
+    else:
+        logger.info('Patching SSL HTTPS Context')
+        # Handle target environment that doesn't support HTTPS verification
+        ssl._create_default_https_context = _create_unverified_https_context
 
 
 def remove_none(struct, context=None):
@@ -135,4 +150,3 @@ def searchparams_to_querystring(search_params):
         query += '"%s"%s%s' % (field, query_operator, query_value)
 
     return query
-
