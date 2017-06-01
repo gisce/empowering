@@ -1,4 +1,5 @@
 from marshmallow import Schema, fields
+from marshmallow.validate import OneOf
 
 
 class Integer(fields.Integer):
@@ -31,29 +32,29 @@ class CustomerBuildingData(Schema):
     buildingConstructionYear = Integer()
     dwellingArea = Integer()
     buildingVolume = Integer()
-    buildingType = fields.Select(['Single_house', 'Apartment'])
-    dwellingPositionInBuilding = fields.Select([
+    buildingType = fields.Str(validate=OneOf(['Single_house', 'Apartment']))
+    dwellingPositionInBuilding = fields.Str(validate=OneOf([
         'first_floor', 'middle_floor', 'last_floor', 'other'
-    ])
-    dwellingOrientation = fields.Select([
+    ]))
+    dwellingOrientation = fields.Str(validate=OneOf([
         'S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'
-    ])
-    buildingWindowsType = fields.Select([
+    ]))
+    buildingWindowsType = fields.Str(validate=OneOf([
         'single_panel', 'double_panel', 'triple_panel', 'low_emittance', 'other'
-    ])
-    buildingWindowsFrame = fields.Select([
+    ]))
+    buildingWindowsFrame = fields.Str(validate=OneOf([
         'PVC', 'wood', 'aluminium', 'steel', 'other'
-    ])
-    buildingHeatingSource = fields.Select([
+    ]))
+    buildingHeatingSource = fields.Str(validate=OneOf([
         'electricity', 'gas', 'gasoil', 'district_heating', 'biomass', 'other'
-    ])
-    buildingHeatingSourceDhw = fields.Select([
+    ]))
+    buildingHeatingSourceDhw = fields.Str(validate=OneOf([
         'electricity', 'gas', 'gasoil', 'district_heating', 'biomass', 'other'
-    ])
-    buildingSolarSystem = fields.Select([
+    ]))
+    buildingSolarSystem = fields.Str(validate=OneOf([
         'PV', 'solar_thermal_heating', 'solar_thermal_DHW', 'other',
         'not_installed'
-    ])
+    ]))
 
 
 class CustomerProfileEducationLevel(Schema):
@@ -134,18 +135,18 @@ class Contract(Schema):
 
 
 class Reading(Schema):
-    type = fields.Select([
+    type = fields.Str(validate=OneOf([
         'electricityConsumption', 'electricityKiloVoltAmpHours',
         'heatConsumption', 'gasConsumption', 'estimatedElectricityConsumption',
         'estimatedElectricityKiloVoltAmpHours', 'estimatedHeatConsumption',
         'estimatedGasConsumption'
-    ])
-    unit = fields.Select(['kWh', 'Wh'])
-    period = fields.Select(['INSTANT', 'CUMULATIVE', 'PULSE'])
+    ]))
+    unit = fields.Str(validate=OneOf(['kWh', 'Wh']))
+    period = fields.Str(validate=OneOf(['INSTANT', 'CUMULATIVE', 'PULSE']))
 
 
 class Measurement(Schema):
-    type = fields.Select(['electricityConsumption'])
+    type = fields.Str(validate=OneOf(['electricityConsumption']))
     timestamp = StringDateTime(format='iso')
     value = fields.Float()
 
