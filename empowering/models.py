@@ -1,7 +1,8 @@
-from marshmallow import Serializer, fields
+from marshmallow import Schema, fields
+from marshmallow.validate import OneOf
 
 
-class CustomerAddress(Serializer):
+class CustomerAddress(Schema):
     buildingId = fields.UUID()
     country = fields.String()
     countryCode = fields.String()
@@ -14,28 +15,51 @@ class CustomerAddress(Serializer):
     parcelNumber = fields.String()
 
 
-class CustomerBuildingData(Serializer):
+class CustomerBuildingData(Schema):
     buildingConstructionYear = fields.Integer()
     dwellingArea = fields.Integer()
     buildingVolume = fields.Integer()
-    buildingType = fields.Select(['Single_house', 'Apartment'])
-    dwellingPositionInBuilding = fields.Select(['first_floor', 'middle_floor', 'last_floor', 'other'])
-    dwellingOrientation = fields.Select(['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'])
-    buildingWindowsType = fields.Select(['single_panel', 'double_panel', 'triple_panel', 'low_emittance', 'other'])
-    buildingWindowsFrame = fields.Select(['PVC', 'wood', 'aluminium', 'steel', 'other'])
-    buildingHeatingSource = fields.Select(['electricity', 'gas', 'gasoil', 'district_heating', 'biomass', 'other'])
-    buildingHeatingSourceDhw = fields.Select(['electricity', 'gas', 'gasoil', 'district_heating', 'biomass', 'other'])
-    buildingSolarSystem = fields.Select(['PV', 'solar_thermal_heating', 'solar_thermal_DHW', 'other', 'not_installed'])
+    buildingType = fields.Str(validate=OneOf(['Single_house', 'Apartment']))
+    dwellingPositionInBuilding = fields.Str(validate=OneOf(['first_floor',
+                                                            'middle_floor',
+                                                            'last_floor',
+                                                            'other']))
+    dwellingOrientation = fields.Str(validate=OneOf(['S', 'SE', 'E', 'NE',
+                                                     'N', 'NW', 'W', 'SW']))
+    buildingWindowsType = fields.Str(validate=OneOf(['single_panel',
+                                                     'double_panel',
+                                                     'triple_panel',
+                                                     'low_emittance',
+                                                     'other']))
+    buildingWindowsFrame = fields.Str(validate=OneOf(['PVC',
+                                                      'wood',
+                                                      'aluminium',
+                                                      'steel',
+                                                      'other']))
+    buildingHeatingSource = fields.Str(validate=OneOf(['electricity', 'gas',
+                                                       'gasoil',
+                                                       'district_heating',
+                                                       'biomass',
+                                                       'other']))
+    buildingHeatingSourceDhw = fields.Str(validate=OneOf(['electricity',
+                                                          'gas', 'gasoil',
+                                                          'district_heating',
+                                                          'biomass', 'other']))
+    buildingSolarSystem = fields.Str(validate=OneOf(['PV',
+                                                     'solar_thermal_heating',
+                                                     'solar_thermal_DHW',
+                                                     'other',
+                                                     'not_installed']))
 
 
-class CustomerProfileEducationLevel(Serializer):
+class CustomerProfileEducationLevel(Schema):
     edu_prim = fields.Integer()
     edu_sec = fields.Integer()
     edu_uni = fields.Integer()
     edu_noStudies = fields.Integer()
 
 
-class CustomerProfile(Serializer):
+class CustomerProfile(Schema):
     totalPersonsNumber = fields.Integer()
     minorsPersonsNumber = fields.Integer()
     workingAgePersonsNumber = fields.Integer()
@@ -45,11 +69,11 @@ class CustomerProfile(Serializer):
     educationLevel = fields.Nested(CustomerProfileEducationLevel)
 
 
-class CustomerCustomisedGroupingCriteria(Serializer):
+class CustomerCustomisedGroupingCriteria(Schema):
     pass
 
 
-class CustomerCustomisedServiceParameters(Serializer):
+class CustomerCustomisedServiceParameters(Schema):
     OT101 = fields.String()
     OT103 = fields.String()
     OT105 = fields.String()
@@ -65,7 +89,8 @@ class CustomerCustomisedServiceParameters(Serializer):
     OT701 = fields.String()
     OT703 = fields.String()
 
-class Customer(Serializer):
+
+class Customer(Schema):
     customerId = fields.UUID()
     address = fields.Nested(CustomerAddress)
     buildingData = fields.Nested(CustomerBuildingData)
@@ -74,13 +99,13 @@ class Customer(Serializer):
     customisedServiceParameters = fields.Nested(CustomerCustomisedServiceParameters)
 
 
-class Device(Serializer):
+class Device(Schema):
     dateStart = fields.DateTime(format='iso')
     dateEnd = fields.DateTime(format='iso')
     deviceId = fields.UUID()
 
 
-class Contract(Serializer):
+class Contract(Schema):
     payerId = fields.UUID()
     ownerId = fields.UUID()
     signerId = fields.UUID()
@@ -101,36 +126,41 @@ class Contract(Serializer):
     devices = fields.List(fields.Nested(Device))
 
 
-class Reading(Serializer):
-    type = fields.Select(['electricityConsumption', 'electricityKiloVoltAmpHours', 'heatConsumption', 'gasConsumption',
-                          'estimatedElectricityConsumption', 'estimatedElectricityKiloVoltAmpHours',
-                          'estimatedHeatConsumption', 'estimatedGasConsumption'])
-    unit = fields.Select(['kWh', 'Wh'])
-    period = fields.Select(['INSTANT', 'CUMULATIVE', 'PULSE'])
+class Reading(Schema):
+    type = fields.Str(validate=OneOf(['electricityConsumption',
+                                      'electricityKiloVoltAmpHours',
+                                      'heatConsumption',
+                                      'gasConsumption',
+                                      'estimatedElectricityConsumption',
+                                      'estimatedElectricityKiloVoltAmpHours',
+                                      'estimatedHeatConsumption',
+                                      'estimatedGasConsumption']))
+    unit = fields.Str(validate=OneOf(['kWh', 'Wh']))
+    period = fields.Str(validate=OneOf(['INSTANT', 'CUMULATIVE', 'PULSE']))
 
 
-class Measurement(Serializer):
-    type = fields.Select(['electricityConsumption'])
+class Measurement(Schema):
+    type = fields.Str(validate=OneOf(['electricityConsumption']))
     timestamp = fields.DateTime(format='iso')
     value = fields.Float()
 
 
-class AmonMeasure(Serializer):
+class AmonMeasure(Schema):
     deviceId = fields.UUID()
     meteringPointId = fields.UUID()
     readings = fields.List(fields.Nested(Reading))
     measurements = fields.List(fields.Nested(Measurement))
 
 
-class ResidentialTimeofuseMeasurement(Serializer):
-    type = fields.Select(['electricityConsumption'])
+class ResidentialTimeofuseMeasurement(Schema):
+    type = fields.Str(validate=OneOf(['electricityConsumption']))
     timestamp = fields.DateTime(format='iso')
     p1 = fields.Float()
     p2 = fields.Float()
     p3 = fields.Float()
 
 
-class ResidentialTimeofuseAmonMeasure(Serializer):
+class ResidentialTimeofuseAmonMeasure(Schema):
     deviceId = fields.UUID()
     meteringPointId = fields.UUID()
     readings = fields.List(fields.Nested(Reading))
