@@ -1,4 +1,4 @@
 times
 libsaas>=0.4
 arrow
-marshmallow>=2.0.0b2
+marshmallow>=2.13.5
