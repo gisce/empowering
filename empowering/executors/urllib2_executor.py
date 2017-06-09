@@ -5,8 +5,10 @@ import json
 from urlparse import urlparse, urlunparse
 from libsaas.executors import base, urllib2_executor
 
-
 logger = logging.getLogger('empowering.executors.urllib2_executor')
+
+API_HOST = 'api.empowering.cimne.com'
+DEBUG_API_HOST = '91.121.140.152'
 
 
 class HTTPSClientAuthHandler(urllib2.HTTPSHandler):
@@ -26,6 +28,9 @@ class HTTPSClientAuthHandler(urllib2.HTTPSHandler):
         return self.do_open(self.getConnection, req)
 
     def getConnection(self, host, timeout=300):
+        if host not in (API_HOST, DEBUG_API_HOST):
+            res = httplib.HTTPSConnection(host)
+            return res
         logger.debug('using https connection (key file:{} Cert file:{})'.format(
             self.key_file, self.cert_file
         ))
