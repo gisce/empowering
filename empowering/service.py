@@ -123,6 +123,13 @@ class Empowering(base.Resource):
     def get_url(self):
         return "{0}/{1}".format(self.apiroot, self.version)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.login_handler and self.token:
+            self.logout()
+
     def login(self, user, password):
         if self.login_handler and self.token:
             return {'success': True, 'token': self.token}
