@@ -47,6 +47,14 @@ class AmonMeasures(EmpoweringResource):
         raise base.MethodNotSupported
 
 
+class ResidentialTimeofuseAmonMeasures(AmonMeasures):
+    path = 'residential_timeofuse_amon_measures'
+
+
+class TertiaryAmonMeasures(AmonMeasures):
+    path = 'tertiary_amon_measures'
+
+
 class AmonMeasuresMeasurements(EmpoweringResource):
     path = 'amon_measures_measurements'
 
@@ -158,6 +166,14 @@ class Empowering(base.Resource):
     @base.resource(AmonMeasures)
     def amon_measures(self):
         return AmonMeasures(self)
+
+    @base.resource(ResidentialTimeofuseAmonMeasures)
+    def residential_timeofuse_amon_measures(self):
+        return ResidentialTimeofuseAmonMeasures(self)
+
+    @base.resource(TertiaryAmonMeasures)
+    def tertiary_amon_measures(self):
+        return  TertiaryAmonMeasures(self)
 
     @base.resource(Measures)
     def measures(self):
