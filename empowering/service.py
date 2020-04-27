@@ -80,6 +80,10 @@ class Measures(AmonMeasuresMeasurements):
              DeprecationWarning)
 
 
+class Tariffs(EmpoweringResource):
+    path = 'raw_tariffs'
+
+
 class Empowering(base.Resource):
     """
     Empowering Insight Engine Service API.
@@ -191,6 +195,10 @@ class Empowering(base.Resource):
     @base.resource(Contracts)
     def contracts(self):
         return Contracts(self)
+
+    @base.resource(Tariffs)
+    def tariffs(self):
+        return Tariffs(self)
 
     @base.resource(OT101Results)
     def ot101_result(self, result_id):
