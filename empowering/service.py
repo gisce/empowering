@@ -26,10 +26,6 @@ from empowering import models
 class Contracts(EmpoweringResource):
     path = 'contracts'
 
-    def wrap_object(self, obj):
-        serializer = models.Contract()
-        return serializer.dump(obj).data
-
 
 class AmonMeasures(EmpoweringResource):
     path = 'amon_measures'
