@@ -80,6 +80,14 @@ class Tariffs(EmpoweringResource):
     path = 'raw_tariffs'
 
 
+class IndexedPrice(EmpoweringResource):
+    path = 'amon_indexed_price'
+
+    @base.apimethod
+    def delete(self, start=None, end=None):
+        raise base.MethodNotSupported
+
+
 class Empowering(base.Resource):
     """
     Empowering Insight Engine Service API.
@@ -195,6 +203,10 @@ class Empowering(base.Resource):
     @base.resource(Tariffs)
     def tariffs(self):
         return Tariffs(self)
+
+    @base.resource
+    def indexed_price():
+        return IndexedPrice(self)
 
     @base.resource(OT101Results)
     def ot101_result(self, result_id):
