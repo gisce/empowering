@@ -156,9 +156,3 @@ class AmonMeasure(Schema):
     meteringPointId = fields.UUID()
     readings = fields.List(fields.Nested(Reading))
     measurements = fields.List(fields.Nested(Measurement))
-
-class IndexedPrice(Schema):
-    tariffId = fields.String()
-    tariffCostId = Integer()
-    price = fields.Float()
-    datetime = StringDateTime(format='iso')
