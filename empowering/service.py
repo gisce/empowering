@@ -208,8 +208,8 @@ class Empowering(base.Resource):
     def tariffs(self):
         return Tariffs(self)
 
-    @base.resource
-    def price_indexed():
+    @base.resource(PriceIndexed)
+    def price_indexed(self):
         return PriceIndexed(self)
 
     @base.resource(OT101Results)
