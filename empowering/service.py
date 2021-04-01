@@ -80,11 +80,15 @@ class Tariffs(EmpoweringResource):
     path = 'raw_tariffs'
 
 
-class IndexedPrice(EmpoweringResource):
-    path = 'amon_indexed_price'
+class PriceIndexed(EmpoweringResource):
+    path = 'amon_price_indexed'
 
     @base.apimethod
-    def delete(self, start=None, end=None):
+    def update(self, obj, _id):
+        raise base.MethodNotSupported
+
+    @base.apimethod
+    def delete(self, obj, _id):
         raise base.MethodNotSupported
 
 
@@ -205,8 +209,8 @@ class Empowering(base.Resource):
         return Tariffs(self)
 
     @base.resource
-    def indexed_price():
-        return IndexedPrice(self)
+    def price_indexed():
+        return PriceIndexed(self)
 
     @base.resource(OT101Results)
     def ot101_result(self, result_id):
