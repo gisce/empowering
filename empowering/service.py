@@ -81,7 +81,7 @@ class Tariffs(EmpoweringResource):
 
 
 class PriceIndexed(EmpoweringResource):
-    path = 'amon_price_indexed'
+    path = 'price_indexed'
 
     @base.apimethod
     def update(self, obj, _id):
