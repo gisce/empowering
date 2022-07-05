@@ -20,10 +20,13 @@ class EmpoweringResource(base.RESTResource):
         return request, parsers.parse_json
 
     @base.apimethod
-    def get(self, where=None, sort=None):
+    def get(self, where=None, sort=None, rid=None):
         sort = sort and sort.replace(' ', '')
         params = base.get_params(('where', 'sort'), locals())
-        request = http.Request('GET', self.get_url(), params)
+        url = self.get_url()
+        if rid:
+            url = '{}/{}'.format(url, rid)
+        request = http.Request('GET', url, params)
 
         return request, parsers.parse_json
 
