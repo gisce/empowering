@@ -94,7 +94,7 @@ def make_uuid(model, model_id):
         token = '%s,%s' % (model, model_id)
         return str(uuid.uuid5(uuid.NAMESPACE_OID, token))
     else:
-        return model_id
+        return str(model_id)
 
 
 def make_utc_timestamp(timestamp, timezone='Europe/Madrid'):
