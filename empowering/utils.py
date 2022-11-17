@@ -4,6 +4,7 @@ import uuid
 import times
 import ssl
 from arrow.parser import DateTimeParser
+import os
 
 
 # Monkey patch parse function for times library (newer)
@@ -89,8 +90,11 @@ def make_uuid(model, model_id):
         model = model.encode('utf-8')
     if isinstance(model_id, unicode):
         model_id = model_id.encode('utf-8')
-    token = '%s,%s' % (model, model_id)
-    return str(uuid.uuid5(uuid.NAMESPACE_OID, token))
+    if os.getenv('EMPOWERING_ANONIMIZE', True):
+        token = '%s,%s' % (model, model_id)
+        return str(uuid.uuid5(uuid.NAMESPACE_OID, token))
+    else:
+        return model_id
 
 
 def make_utc_timestamp(timestamp, timezone='Europe/Madrid'):
