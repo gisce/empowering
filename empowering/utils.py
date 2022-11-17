@@ -90,7 +90,7 @@ def make_uuid(model, model_id):
         model = model.encode('utf-8')
     if isinstance(model_id, unicode):
         model_id = model_id.encode('utf-8')
-    if os.getenv('ANONIMIZE', True):
+    if int(os.getenv('ANONIMIZE', '1')):
         token = '%s,%s' % (model, model_id)
         return str(uuid.uuid5(uuid.NAMESPACE_OID, token))
     else:
