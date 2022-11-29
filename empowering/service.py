@@ -26,10 +26,6 @@ from empowering import models
 class Contracts(EmpoweringResource):
     path = 'contracts'
 
-    def wrap_object(self, obj):
-        serializer = models.Contract()
-        return serializer.dump(obj).data
-
 
 class AmonMeasures(EmpoweringResource):
     path = 'amon_measures'
@@ -45,6 +41,14 @@ class AmonMeasures(EmpoweringResource):
     @base.apimethod
     def delete(self, obj, etag):
         raise base.MethodNotSupported
+
+
+class ResidentialTimeofuseAmonMeasures(AmonMeasures):
+    path = 'residential_timeofuse_amon_measures'
+
+
+class TertiaryAmonMeasures(AmonMeasures):
+    path = 'tertiary_amon_measures'
 
 
 class AmonMeasuresMeasurements(EmpoweringResource):
@@ -70,6 +74,22 @@ class Measures(AmonMeasuresMeasurements):
         super(AmonMeasuresMeasurements, self).__init__(*args, **kwargs)
         warn('Deprecated class. Use AmonMeasuresMeasurements',
              DeprecationWarning)
+
+
+class Tariffs(EmpoweringResource):
+    path = 'raw_tariffs'
+
+
+class PriceIndexed(EmpoweringResource):
+    path = 'price_indexed'
+
+    @base.apimethod
+    def update(self, obj, _id):
+        raise base.MethodNotSupported
+
+    @base.apimethod
+    def delete(self, obj, _id):
+        raise base.MethodNotSupported
 
 
 class Empowering(base.Resource):
@@ -123,6 +143,13 @@ class Empowering(base.Resource):
     def get_url(self):
         return "{0}/{1}".format(self.apiroot, self.version)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.login_handler and self.token:
+            self.logout()
+
     def login(self, user, password):
         if self.login_handler and self.token:
             return {'success': True, 'token': self.token}
@@ -152,6 +179,14 @@ class Empowering(base.Resource):
     def amon_measures(self):
         return AmonMeasures(self)
 
+    @base.resource(ResidentialTimeofuseAmonMeasures)
+    def residential_timeofuse_amon_measures(self):
+        return ResidentialTimeofuseAmonMeasures(self)
+
+    @base.resource(TertiaryAmonMeasures)
+    def tertiary_amon_measures(self):
+        return  TertiaryAmonMeasures(self)
+
     @base.resource(Measures)
     def measures(self):
         warn('Deprecated. Use amon_measures_measurements', DeprecationWarning)
@@ -168,6 +203,14 @@ class Empowering(base.Resource):
     @base.resource(Contracts)
     def contracts(self):
         return Contracts(self)
+
+    @base.resource(Tariffs)
+    def tariffs(self):
+        return Tariffs(self)
+
+    @base.resource(PriceIndexed)
+    def price_indexed(self):
+        return PriceIndexed(self)
 
     @base.resource(OT101Results)
     def ot101_result(self, result_id):
